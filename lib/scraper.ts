@@ -210,13 +210,31 @@ export async function scrapeProfile(
           const thumbnailUrl = getMeta("og:image");
           const caption = getMeta("og:description");
 
+          let publishedAt: string | null = null;
+          const tsMatch = html.match(/"taken_at_timestamp":(\d+)/);
+          if (tsMatch) {
+            publishedAt = new Date(parseInt(tsMatch[1], 10) * 1000).toISOString();
+          }
+          if (!publishedAt) {
+            const dateMatch = html.match(/"date":"(\d{4}-\d{2}-\d{2}T[^"]+)"/);
+            if (dateMatch) {
+              publishedAt = new Date(dateMatch[1]).toISOString();
+            }
+          }
+          if (!publishedAt) {
+            const ogUpdatedMatch = html.match(/property="article:published_time"(?:[^>]*?)content="([^"]+)"/);
+            if (ogUpdatedMatch) {
+              publishedAt = new Date(ogUpdatedMatch[1]).toISOString();
+            }
+          }
+
           const isVideo =
             videoUrl !== null ||
             getMeta("og:video") !== null ||
             html.includes('"video_url"') ||
             html.includes("og:video");
 
-          return { videoUrl, thumbnailUrl, caption, isVideo };
+          return { videoUrl, thumbnailUrl, caption, isVideo, publishedAt };
         });
 
         await postPage.close();
@@ -231,7 +249,7 @@ export async function scrapeProfile(
           thumbnailUrl: postData.thumbnailUrl,
           videoUrl: postData.videoUrl,
           mediaType: postData.isVideo ? "VIDEO" : "IMAGE",
-          publishedAt: new Date().toISOString(),
+          publishedAt: postData.publishedAt || new Date().toISOString(),
         });
       } catch {
         continue;

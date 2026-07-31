@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Search, Loader2, AlertCircle, CheckCircle2, Video } from "lucide-react";
@@ -22,7 +21,6 @@ interface ScanResult {
 }
 
 export default function ScanPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);

@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
             permalink: item.permalink,
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
+            videoUrl: item.media_url || null,
             publishedAt: new Date(item.timestamp),
           },
           create: {
@@ -72,7 +73,9 @@ export async function GET(req: NextRequest) {
             permalink: item.permalink,
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
+            videoUrl: item.media_url || null,
             mediaType: item.media_type,
+            source: "oauth",
             publishedAt: new Date(item.timestamp),
           },
         });

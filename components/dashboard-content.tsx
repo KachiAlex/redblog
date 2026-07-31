@@ -10,6 +10,7 @@ type CreatorData = {
   igUsername: string;
   igProfilePic: string | null;
   connectedAt: string;
+  scannedFrom: string;
   blogPage: { slug: string } | null;
   posts: {
     id: string;
@@ -26,7 +27,10 @@ export function DashboardContent({ creators }: { creators: CreatorData[] }) {
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const creator = creators[0];
 
+  const isScanned = creator.scannedFrom === "scan";
+
   async function handleSync() {
+    if (isScanned) return;
     setSyncing(true);
     setSyncResult(null);
     try {
@@ -44,7 +48,7 @@ export function DashboardContent({ creators }: { creators: CreatorData[] }) {
         );
         setTimeout(() => window.location.reload(), 1500);
       } else {
-        setSyncResult("Sync failed. Please try again.");
+        setSyncResult(data.error || "Sync failed. Please try again.");
       }
     } catch {
       setSyncResult("Sync failed. Please try again.");
@@ -90,15 +94,21 @@ export function DashboardContent({ creators }: { creators: CreatorData[] }) {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="btn btn-ghost"
-            style={{ opacity: syncing ? 0.5 : 1 }}
-          >
-            <RefreshCw style={{ width: "14px", height: "14px", animation: syncing ? "spin 1s linear infinite" : "none" }} />
-            {syncing ? "Syncing..." : "Sync Now"}
-          </button>
+          {isScanned ? (
+            <span className="badge-dark" style={{ background: "rgba(232, 64, 44, 0.15)", color: "var(--red-bright)", padding: "8px 14px" }}>
+              Scanned — no OAuth token
+            </span>
+          ) : (
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="btn btn-ghost"
+              style={{ opacity: syncing ? 0.5 : 1 }}
+            >
+              <RefreshCw style={{ width: "14px", height: "14px", animation: syncing ? "spin 1s linear infinite" : "none" }} />
+              {syncing ? "Syncing..." : "Sync Now"}
+            </button>
+          )}
           {blogUrl && (
             <Link href={blogUrl} className="btn btn-primary">
               <ExternalLink style={{ width: "14px", height: "14px" }} />

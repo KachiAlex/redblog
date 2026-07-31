@@ -58,6 +58,7 @@ export default async function DashboardPage({
               igUsername: c.igUsername,
               igProfilePic: c.igProfilePic,
               connectedAt: c.connectedAt.toISOString(),
+              scannedFrom: c.scannedFrom,
               blogPage: c.blogPage ? { slug: c.blogPage.slug } : null,
               posts: c.posts.map((p) => ({
                 id: p.id,

@@ -19,6 +19,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 });
     }
 
+    if (creator.scannedFrom === "scan" || creator.accessToken === "scanned_no_token") {
+      return NextResponse.json(
+        { error: "This creator was added via scan and has no OAuth token to sync." },
+        { status: 400 }
+      );
+    }
+
     const token = decrypt(creator.accessToken);
     const mediaRes = await getMedia(token);
     const mediaItems = mediaRes.data || [];
@@ -38,7 +45,6 @@ export async function POST(req: NextRequest) {
             embedHtml = oembed.html || null;
             embedTitle = oembed.title || null;
           } catch {
-            // oEmbed may fail for some posts — graceful degradation
           }
 
           await prisma.post.create({
@@ -50,7 +56,9 @@ export async function POST(req: NextRequest) {
               embedTitle,
               caption: item.caption || null,
               thumbnailUrl: item.thumbnail_url || null,
+              videoUrl: item.media_url || null,
               mediaType: item.media_type,
+              source: "oauth",
               publishedAt: new Date(item.timestamp),
             },
           });
