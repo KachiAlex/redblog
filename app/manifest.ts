@@ -2,14 +2,14 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ReelBlog — Turn Your Instagram Reels Into a Blog",
-    short_name: "ReelBlog",
+    name: "RedBlog — Turn Your Instagram Reels Into a Blog",
+    short_name: "RedBlog",
     description:
       "Connect your Instagram account and automatically publish your Reels as a beautiful, playable blog.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#ec4899",
+    background_color: "#121014",
+    theme_color: "#e8402c",
     icons: [
       {
         src: "/icon.svg",

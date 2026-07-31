@@ -228,7 +228,7 @@ export function ThemeCustomizer({
           <div>
             <label className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Blog URL Slug</label>
             <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span className="font-mono-label" style={{ fontSize: "14px", color: "var(--gray)" }}>handle.blog/</span>
+              <span className="font-mono-label" style={{ fontSize: "14px", color: "var(--gray)" }}>redblog.app/</span>
               <input type="text" value={settings.slug} onChange={(e) => setSettings((s) => ({ ...s, slug: e.target.value }))} style={inputStyle} placeholder="yourhandle" />
             </div>
           </div>

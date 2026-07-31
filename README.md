@@ -1,4 +1,4 @@
-# ReelBlog — Turn Your Instagram Reels Into a Blog
+# RedBlog — Turn Your Instagram Reels Into a Blog
 
 A compliant Instagram-to-blog platform that lets creators connect their Instagram account and automatically publish their Reels as a beautiful, playable, SEO-friendly blog.
 

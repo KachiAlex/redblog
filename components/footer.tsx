@@ -18,7 +18,7 @@ export function Footer() {
           className="font-serif-display"
           style={{ fontStyle: "italic", fontSize: "16px" }}
         >
-          Handle
+          RedBlog
         </Link>
         <span
           className="font-mono-label"

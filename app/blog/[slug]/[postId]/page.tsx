@@ -23,7 +23,7 @@ export async function generateMetadata({
     },
   });
 
-  if (!post) return { title: "Post not found — Handle" };
+  if (!post) return { title: "Post not found — RedBlog" };
 
   const title = post.embedTitle || truncate(post.caption || "Instagram Reel", 80);
   return {

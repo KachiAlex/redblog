@@ -55,7 +55,7 @@ export function DashboardSidebar() {
               display: "inline-block",
             }}
           />
-          Handle
+          RedBlog
         </Link>
       </div>
 

@@ -41,7 +41,7 @@ export default function NotFound() {
         deleted, or never exposed in the first place.
       </p>
       <Link href="/" className="btn btn-primary">
-        ← Back to Handle
+        ← Back to RedBlog
       </Link>
     </div>
   );

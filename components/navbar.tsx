@@ -41,7 +41,7 @@ export function Navbar() {
               display: "inline-block",
             }}
           />
-          Handle
+          RedBlog
         </Link>
 
         <div

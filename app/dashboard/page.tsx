@@ -78,7 +78,7 @@ export default async function DashboardPage({
 function NotConnectedState() {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", textAlign: "center" }}>
-      <span className="eyebrow" style={{ marginBottom: "16px" }}>No handle connected</span>
+      <span className="eyebrow" style={{ marginBottom: "16px" }}>No blog connected</span>
       <h2
         className="font-serif-display"
         style={{ fontStyle: "italic", fontSize: "32px", marginBottom: "12px" }}
@@ -86,7 +86,7 @@ function NotConnectedState() {
         Connect your Instagram to begin.
       </h2>
       <p style={{ color: "var(--gray)", fontSize: "15px", maxWidth: "380px", marginBottom: "28px", lineHeight: 1.6 }}>
-        Once connected, Handle automatically syncs your Reels and develops them into a permanent, searchable archive. It takes less than a minute.
+        Once connected, RedBlog automatically syncs your Reels and develops them into a permanent, searchable archive. It takes less than a minute.
       </p>
       <Link href="/api/auth/login" className="btn btn-primary">
         <Instagram style={{ width: "16px", height: "16px" }} />

@@ -38,7 +38,7 @@ export default function HomePage() {
                 marginBottom: "34px",
               }}
             >
-              Connect your Instagram account and Handle turns your Reels into a
+              Connect your Instagram account and RedBlog turns your Reels into a
               permanent, searchable blog — hosted by you, credited to you,
               indexed by Google. Nothing is downloaded, screen-recorded, or
               lifted from someone else&apos;s account. It&apos;s your own
@@ -49,7 +49,7 @@ export default function HomePage() {
                 Connect Instagram →
               </Link>
               <Link href="#example" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px" }}>
-                See a live handle
+                See a live blog
               </Link>
             </div>
             <div
@@ -110,7 +110,7 @@ export default function HomePage() {
             <Step
               num="01 — EXPOSE"
               title="Connect your account"
-              desc="Sign in with Instagram Login. Handle requests read-only access to your own posts — nothing else, and no password ever touches our servers."
+              desc="Sign in with Instagram Login. RedBlog requests read-only access to your own posts — nothing else, and no password ever touches our servers."
             />
             <Step
               num="02 — DEVELOP"
@@ -120,7 +120,7 @@ export default function HomePage() {
             <Step
               num="03 — PRINT"
               title="Your archive goes live"
-              desc="Published at your own handle.blog address — permanent, embeddable elsewhere, indexed by search engines, and themed however you like."
+              desc="Published at your own redblog.app address — permanent, embeddable elsewhere, indexed by search engines, and themed however you like."
             />
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function HomePage() {
           >
             <div>
               <span className="eyebrow" style={{ color: "var(--red)" }}>
-                A live handle
+                A live blog
               </span>
               <h3
                 className="font-serif-display"
@@ -152,7 +152,7 @@ export default function HomePage() {
               <p style={{ color: "#5a5548", fontSize: "14.5px", lineHeight: 1.6, maxWidth: "340px", marginBottom: "22px" }}>
                 Three weeks of Reels, twelve blog entries, one archive that
                 outlives the feed. This is what a connected account looks like
-                once Handle has been running for a month.
+                once RedBlog has been running for a month.
               </p>
               <Link
                 href="/blog"
@@ -184,7 +184,7 @@ export default function HomePage() {
               className="font-serif-display"
               style={{ fontStyle: "italic", fontSize: "36px", marginTop: "14px" }}
             >
-              Simple, per handle.
+              Simple, per blog.
             </h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }} id="plans-grid">
@@ -192,7 +192,7 @@ export default function HomePage() {
               tag="Contact sheet"
               price="Free"
               priceSuffix=""
-              features={["1 connected account", "Up to 20 archived posts", "Handle.blog subdomain", "Standard theme"]}
+              features={["1 connected account", "Up to 20 archived posts", "Redblog.app subdomain", "Standard theme"]}
               cta="Start free"
               ctaHref="/api/auth/login"
               featured={false}

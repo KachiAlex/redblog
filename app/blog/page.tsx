@@ -7,8 +7,8 @@ import { truncate } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Explore — Handle",
-  description: "Discover creator blogs powered by Handle.",
+  title: "Explore — RedBlog",
+  description: "Discover creator blogs powered by RedBlog.",
 };
 
 export default async function BlogListPage() {
@@ -38,10 +38,10 @@ export default async function BlogListPage() {
             className="font-serif-display"
             style={{ fontStyle: "italic", fontSize: "clamp(36px, 5vw, 52px)", marginTop: "14px", lineHeight: 1.1 }}
           >
-            Explore handles, developed.
+            Explore blogs, developed.
           </h1>
           <p style={{ color: "var(--gray)", fontSize: "16px", marginTop: "12px", maxWidth: "480px" }}>
-            Every connected account, archived and indexed. Pick a handle to browse their full reel history.
+            Every connected account, archived and indexed. Pick a blog to browse their full reel history.
           </p>
         </div>
       </section>
@@ -50,7 +50,7 @@ export default async function BlogListPage() {
         <div className="wrap">
           {blogPages.length === 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", textAlign: "center" }}>
-              <span className="eyebrow" style={{ marginBottom: "16px" }}>No handles connected yet</span>
+              <span className="eyebrow" style={{ marginBottom: "16px" }}>No blogs connected yet</span>
               <h2
                 className="font-serif-display"
                 style={{ fontStyle: "italic", fontSize: "28px", marginBottom: "12px" }}

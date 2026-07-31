@@ -29,7 +29,7 @@ export default async function SettingsPage() {
 
           {!creator ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", textAlign: "center" }}>
-              <span className="eyebrow" style={{ marginBottom: "16px" }}>No handle connected</span>
+              <span className="eyebrow" style={{ marginBottom: "16px" }}>No blog connected</span>
               <h2 className="font-serif-display" style={{ fontStyle: "italic", fontSize: "24px", marginBottom: "12px" }}>
                 No account connected.
               </h2>
@@ -55,7 +55,7 @@ export default async function SettingsPage() {
                   } />
                   <Row label="Instagram User ID" value={creator.igUserId} mono />
                   <Row label="Connected Since" value={formatDate(creator.connectedAt)} />
-                  <Row label="Blog URL" value={`handle.blog/${creator.blogPage?.slug || "..."}`} action={
+                  <Row label="Blog URL" value={`redblog.app/${creator.blogPage?.slug || "..."}`} action={
                     creator.blogPage ? (
                       <Link href={`/blog/${creator.blogPage.slug}`} className="btn btn-ghost" style={{ fontSize: "11px", padding: "6px 12px" }}>
                         <ExternalLink style={{ width: "12px", height: "12px" }} /> Open

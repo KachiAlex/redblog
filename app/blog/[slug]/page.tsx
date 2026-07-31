@@ -17,13 +17,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     },
   });
 
-  if (!blogPage) return { title: "Blog not found — Handle" };
+  if (!blogPage) return { title: "Blog not found — RedBlog" };
 
   return {
-    title: `@${blogPage.creator.igUsername} — Handle`,
+    title: `@${blogPage.creator.igUsername} — RedBlog`,
     description: `Watch ${blogPage.creator.igUsername}'s Instagram Reels as a playable archive.`,
     openGraph: {
-      title: `@${blogPage.creator.igUsername} — Handle`,
+      title: `@${blogPage.creator.igUsername} — RedBlog`,
       description: `Watch ${blogPage.creator.igUsername}'s Instagram Reels as a playable archive.`,
       type: "website",
     },
@@ -186,7 +186,7 @@ export default async function BlogPage({
       <footer style={{ borderTop: "1px solid var(--line)", padding: "32px 0" }}>
         <div className="wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
           <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
-            Powered by <Link href="/" style={{ color: "var(--red-bright)" }}>Handle</Link>
+            Powered by <Link href="/" style={{ color: "var(--red-bright)" }}>RedBlog</Link>
           </span>
           <a
             href={`https://instagram.com/${creator.igUsername}`}
