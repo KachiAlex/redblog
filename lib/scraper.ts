@@ -44,7 +44,7 @@ function findLocalChrome(): string | undefined {
 
 async function launchBrowser() {
   if (isVercel) {
-    const sparticuzChromium = require("@sparticuz/chromium");
+    const sparticuzChromium = (await import("@sparticuz/chromium")).default;
     const executablePath = await sparticuzChromium.executablePath();
     return chromium.launch({
       headless: true,
