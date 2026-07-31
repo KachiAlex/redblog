@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { chromium } from "playwright-core";
-import sparticuzChromium from "@sparticuz/chromium";
 
 export interface ScrapedPost {
   igPostId: string;
@@ -45,6 +44,7 @@ function findLocalChrome(): string | undefined {
 
 async function launchBrowser() {
   if (isVercel) {
+    const sparticuzChromium = require("@sparticuz/chromium");
     const executablePath = await sparticuzChromium.executablePath();
     return chromium.launch({
       headless: true,
