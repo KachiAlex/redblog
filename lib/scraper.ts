@@ -75,8 +75,10 @@ export async function scrapeProfile(
   username: string
 ): Promise<ScrapedProfile> {
   const cleanUsername = username.replace(/^@/, "").trim();
+  console.log(`[scraper] Starting scrape for @${cleanUsername}, isVercel=${isVercel}`);
 
   const browser = await launchBrowser();
+  console.log(`[scraper] Browser launched`);
 
   const context = await browser.newContext({
     userAgent:
@@ -93,7 +95,9 @@ export async function scrapeProfile(
 
   try {
     const profileUrl = `https://www.instagram.com/${cleanUsername}/`;
+    console.log(`[scraper] Navigating to ${profileUrl}`);
     await page.goto(profileUrl, { waitUntil: "networkidle", timeout: 30000 });
+    console.log(`[scraper] Page loaded, URL: ${page.url()}`);
     await page.waitForTimeout(2000);
 
     const notFound = await page
@@ -102,6 +106,15 @@ export async function scrapeProfile(
     if (notFound > 0) {
       throw new Error(`Instagram handle @${cleanUsername} not found`);
     }
+
+    const loginWall = await page
+      .locator('text="Log in"')
+      .count();
+    if (loginWall > 0) {
+      console.log(`[scraper] Login wall detected`);
+    }
+
+    console.log(`[scraper] Extracting profile data...`);
 
     const profileData = await page.evaluate(() => {
       const getMeta = (property: string) =>
@@ -161,6 +174,8 @@ export async function scrapeProfile(
         profileData.bio = ogDesc;
       }
     }
+
+    console.log(`[scraper] Found ${profileData.postUrls.length} post URLs`);
 
     const posts: ScrapedPost[] = [];
 
@@ -255,6 +270,8 @@ export async function scrapeProfile(
         continue;
       }
     }
+
+    console.log(`[scraper] Scraped ${posts.length} posts, closing browser`);
 
     return {
       igUserId: profileData.igUserId,
