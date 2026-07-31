@@ -64,10 +64,10 @@ export default async function AdminPage() {
             <span className="eyebrow">Compliance Status: Active</span>
           </div>
           <p style={{ color: "#a9a396", fontSize: "14px", marginTop: "12px", lineHeight: 1.6 }}>
-            All content served via official Instagram Graph API and oEmbed endpoints. No scraping, no rehosting.
+            Content sourced via Instagram Graph API (OAuth), oEmbed, and public profile scanning with video hosting.
           </p>
           <div style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "12px" }}>
-            {["Graph API: Operational", "oEmbed: Operational", "Token Encryption: AES-256-GCM", "OAuth 2.0: Enforced"].map((item) => (
+            {["Graph API: Operational", "oEmbed: Operational", "Playwright Scanner: Active", "Video Hosting: Enabled", "Token Encryption: AES-256-GCM", "OAuth 2.0: Enforced"].map((item) => (
               <span key={item} className="badge-dark" style={{ background: "rgba(232,64,44,0.12)", color: "var(--red-bright)" }}>
                 ● {item}
               </span>
@@ -164,7 +164,8 @@ export default async function AdminPage() {
             <h3 className="font-serif-display" style={{ fontSize: "18px", marginBottom: "16px" }}>Security</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <SysRow label="Token Encryption" value="AES-256-GCM" />
-              <SysRow label="OAuth Flow" value="Instagram Graph API" />
+              <SysRow label="OAuth Flow" value="Instagram API (v23.0)" />
+              <SysRow label="Scanner" value="Playwright + @sparticuz/chromium" />
               <SysRow label="Password Storage" value="None (OAuth only)" />
             </div>
           </div>

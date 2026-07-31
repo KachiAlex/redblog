@@ -3,6 +3,7 @@ import { exchangeCodeForToken, getLongLivedToken, getInstagramProfile, getMedia 
 import { encrypt } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { downloadVideo } from "@/lib/scraper";
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = getUrlParts(req);
@@ -35,12 +36,14 @@ export async function GET(req: NextRequest) {
         igUsername,
         accessToken: encryptedToken,
         tokenExpiry,
+        scannedFrom: "oauth",
       },
       create: {
         igUserId,
         igUsername,
         accessToken: encryptedToken,
         tokenExpiry,
+        scannedFrom: "oauth",
       },
     });
 
@@ -58,6 +61,21 @@ export async function GET(req: NextRequest) {
 
     for (const item of mediaItems) {
       if (item.media_type === "VIDEO" || item.media_type === "CAROUSEL_ALBUM") {
+        let videoFilePath: string | null = null;
+
+        if (item.media_url && item.media_type === "VIDEO") {
+          try {
+            const downloaded = await downloadVideo(item.media_url, item.id);
+            if (downloaded) {
+              videoFilePath = process.env.VERCEL
+                ? `/api/videos/${item.id}.mp4`
+                : downloaded.filePath;
+            }
+          } catch {
+            // Video download may fail — continue with just the URL
+          }
+        }
+
         await prisma.post.upsert({
           where: { igPostId: item.id },
           update: {
@@ -65,6 +83,7 @@ export async function GET(req: NextRequest) {
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
             videoUrl: item.media_url || null,
+            videoFilePath,
             publishedAt: new Date(item.timestamp),
           },
           create: {
@@ -74,6 +93,7 @@ export async function GET(req: NextRequest) {
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
             videoUrl: item.media_url || null,
+            videoFilePath,
             mediaType: item.media_type,
             source: "oauth",
             publishedAt: new Date(item.timestamp),

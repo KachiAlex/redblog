@@ -1,15 +1,21 @@
 const { PrismaClient } = require("@prisma/client");
-const { decrypt } = require("../lib/crypto");
+const { encrypt, decrypt } = require("../lib/crypto");
 const {
   getMedia,
   getOEmbed,
   refreshLongLivedToken,
 } = require("../lib/instagram");
+const { downloadVideo } = require("../lib/scraper");
 
 const prisma = new PrismaClient();
 const POLL_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
 async function syncCreatorPosts(creator) {
+  if (creator.scannedFrom === "scan" || creator.accessToken === "scanned_no_token") {
+    console.log(`[worker] Skipping scanned creator @${creator.igUsername} (no OAuth token)`);
+    return;
+  }
+
   try {
     let token = decrypt(creator.accessToken);
 
@@ -54,12 +60,26 @@ async function syncCreatorPosts(creator) {
         if (!existing) {
           let embedHtml = null;
           let embedTitle = null;
+          let videoFilePath = null;
           try {
             const oembed = await getOEmbed(item.permalink, token);
             embedHtml = oembed.html || null;
             embedTitle = oembed.title || null;
           } catch {
             // Graceful degradation — oEmbed may fail
+          }
+
+          if (item.media_url && item.media_type === "VIDEO") {
+            try {
+              const downloaded = await downloadVideo(item.media_url, item.id);
+              if (downloaded) {
+                videoFilePath = process.env.VERCEL
+                  ? `/api/videos/${item.id}.mp4`
+                  : downloaded.filePath;
+              }
+            } catch {
+              // Video download may fail — continue with just the URL
+            }
           }
 
           await prisma.post.create({
@@ -71,7 +91,10 @@ async function syncCreatorPosts(creator) {
               embedTitle,
               caption: item.caption || null,
               thumbnailUrl: item.thumbnail_url || null,
+              videoUrl: item.media_url || null,
+              videoFilePath,
               mediaType: item.media_type,
+              source: "oauth",
               publishedAt: new Date(item.timestamp),
             },
           });

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { DisconnectButton } from "@/components/disconnect-button";
 import { formatDate } from "@/lib/utils";
-import { ExternalLink, LogOut } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export default async function SettingsPage() {
                   } />
                   <Row label="Instagram User ID" value={creator.igUserId} mono />
                   <Row label="Connected Since" value={formatDate(creator.connectedAt)} />
-                  <Row label="Blog URL" value={`redblog.app/${creator.blogPage?.slug || "..."}`} action={
+                  <Row label="Blog URL" value={`${process.env.NEXTAUTH_URL || "https://redblog-psi.vercel.app"}/${creator.blogPage?.slug || "..."}`} action={
                     creator.blogPage ? (
                       <Link href={`/blog/${creator.blogPage.slug}`} className="btn btn-ghost" style={{ fontSize: "11px", padding: "6px 12px" }}>
                         <ExternalLink style={{ width: "12px", height: "12px" }} /> Open
@@ -91,25 +92,7 @@ export default async function SettingsPage() {
                       Removes your account, tokens, and blog page. This cannot be undone.
                     </p>
                   </div>
-                  <button
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      border: "1px solid var(--red-bright)",
-                      background: "transparent",
-                      color: "var(--red-bright)",
-                      borderRadius: "3px",
-                      padding: "8px 16px",
-                      fontSize: "12.5px",
-                      fontFamily: "var(--font-mono)",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <LogOut style={{ width: "14px", height: "14px" }} />
-                    Disconnect
-                  </button>
+                  <DisconnectButton creatorId={creator.id} />
                 </div>
               </div>
             </div>

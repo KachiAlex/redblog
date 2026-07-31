@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Creator {
@@ -45,6 +45,8 @@ model Post {
 
   @@index([creatorId])
   @@index([publishedAt])
+
+  analytics Analytics[]
 }
 
 model BlogPage {
@@ -67,6 +69,7 @@ model Analytics {
   creatorId   String
   creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   postId      String?
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   pageViews   Int      @default(0)
   date        DateTime @default(now())
 

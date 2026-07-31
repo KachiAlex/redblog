@@ -18,6 +18,7 @@ export default async function DashboardPage({
         orderBy: { publishedAt: "desc" },
         take: 5,
       },
+      _count: { select: { posts: true } },
       blogPage: true,
     },
     orderBy: { connectedAt: "desc" },
@@ -67,7 +68,7 @@ export default async function DashboardPage({
                 permalink: p.permalink,
                 publishedAt: p.publishedAt.toISOString(),
               })),
-              _count: { posts: c.posts.length },
+              _count: { posts: c._count.posts },
             }))} />
           )}
         </div>
