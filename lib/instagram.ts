@@ -1,14 +1,15 @@
 export const INSTAGRAM_AUTH_URL = "https://api.instagram.com/oauth/authorize";
 export const INSTAGRAM_TOKEN_URL = "https://api.instagram.com/oauth/access_token";
-export const INSTAGRAM_GRAPH_BASE = "https://graph.instagram.com";
-export const INSTAGRAM_OEMBED_URL = "https://graph.facebook.com/v19.0/instagram_oembed";
+export const INSTAGRAM_GRAPH_BASE = "https://graph.instagram.com/v23.0";
+export const INSTAGRAM_TOKEN_BASE = "https://graph.instagram.com";
+export const INSTAGRAM_OEMBED_URL = "https://graph.facebook.com/v23.0/instagram_oembed";
 
 export function getInstagramAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: process.env.INSTAGRAM_CLIENT_ID || "",
     redirect_uri: process.env.INSTAGRAM_REDIRECT_URI || "",
     response_type: "code",
-    scope: "user_profile user_media",
+    scope: "instagram_business_basic",
     state,
   });
   return `${INSTAGRAM_AUTH_URL}?${params.toString()}`;
@@ -42,7 +43,7 @@ export async function getLongLivedToken(shortLivedToken: string) {
     access_token: shortLivedToken,
   });
   const res = await fetch(
-    `${INSTAGRAM_GRAPH_BASE}/access_token?${params.toString()}`
+    `${INSTAGRAM_TOKEN_BASE}/access_token?${params.toString()}`
   );
   if (!res.ok) throw new Error("Failed to get long-lived token");
   return res.json();
@@ -54,7 +55,7 @@ export async function refreshLongLivedToken(token: string) {
     access_token: token,
   });
   const res = await fetch(
-    `${INSTAGRAM_GRAPH_BASE}/refresh_access_token?${params.toString()}`
+    `${INSTAGRAM_TOKEN_BASE}/refresh_access_token?${params.toString()}`
   );
   if (!res.ok) throw new Error("Failed to refresh token");
   return res.json();
