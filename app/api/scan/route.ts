@@ -134,6 +134,11 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("Scan error:", err);
     const message = err instanceof Error ? err.message : "Scan failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error("Scan error stack:", stack);
+    return NextResponse.json(
+      { error: message, details: process.env.NODE_ENV === "development" ? stack : undefined },
+      { status: 500 }
+    );
   }
 }

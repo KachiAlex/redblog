@@ -46,9 +46,9 @@ export default function HomePage() {
               <Link href="/scan" className="btn btn-primary" style={{ padding: "14px 24px", fontSize: "13px" }}>
                 Scan any Instagram →
               </Link>
-              <Link href="/api/auth/login" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
+              <a href="/api/auth/login" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
                 Connect via OAuth →
-              </Link>
+              </a>
               <Link href="#example" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px" }}>
                 See a live blog
               </Link>

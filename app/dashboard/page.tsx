@@ -93,9 +93,9 @@ function NotConnectedState() {
       <Link href="/scan" className="btn btn-primary">
         Scan any Instagram →
       </Link>
-      <Link href="/api/auth/login" className="btn btn-ghost" style={{ marginTop: "12px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
+      <a href="/api/auth/login" className="btn btn-ghost" style={{ marginTop: "12px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
         Or connect via OAuth
-      </Link>
+      </a>
     </div>
   );
 }

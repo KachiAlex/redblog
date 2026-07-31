@@ -37,9 +37,9 @@ export default async function SettingsPage() {
               <p style={{ color: "var(--gray)", fontSize: "14px", marginBottom: "24px" }}>
                 Connect your Instagram to manage settings.
               </p>
-              <Link href="/api/auth/login" className="btn btn-primary">
+              <a href="/api/auth/login" className="btn btn-primary">
                 Connect Instagram →
-              </Link>
+              </a>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
