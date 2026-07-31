@@ -91,11 +91,8 @@ function NotConnectedState() {
         Once connected, RedBlog automatically syncs your Reels and develops them into a permanent, searchable archive. It takes less than a minute.
       </p>
       <Link href="/scan" className="btn btn-primary">
-        Scan any Instagram →
+        Connect Instagram →
       </Link>
-      <a href="/api/auth/login" className="btn btn-ghost" style={{ marginTop: "12px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
-        Or connect via OAuth
-      </a>
     </div>
   );
 }

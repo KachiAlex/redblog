@@ -73,9 +73,9 @@ export function Navbar() {
           </Link>
         </div>
 
-        <a href="/api/auth/login" className="btn btn-primary">
+        <Link href="/scan" className="btn btn-primary">
           Connect Instagram →
-        </a>
+        </Link>
       </div>
     </nav>
   );

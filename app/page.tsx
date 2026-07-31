@@ -38,17 +38,18 @@ export default function HomePage() {
                 marginBottom: "34px",
               }}
             >
-              Enter any Instagram handle and RedBlog turns their Reels into a
-              permanent, searchable blog — hosted, credited, and indexed by
-              Google. No login required. Scan any public profile in seconds.
+              Connect your Instagram account and RedBlog turns your Reels into a
+              permanent, searchable blog — hosted by you, credited to you,
+              indexed by Google. Using Instagram&apos;s official API, fully
+              compliant. It&apos;s your own footage, developed a second time.
             </p>
             <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "38px", flexWrap: "wrap" }}>
-              <Link href="/scan" className="btn btn-primary" style={{ padding: "14px 24px", fontSize: "13px" }}>
-                Scan any Instagram →
-              </Link>
-              <a href="/api/auth/login" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
-                Connect via OAuth →
+              <a href="/scan" className="btn btn-primary" style={{ padding: "14px 24px", fontSize: "13px" }}>
+                Connect Instagram →
               </a>
+              <Link href="/blog" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
+                Browse blogs →
+              </Link>
               <Link href="#example" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px" }}>
                 See a live blog
               </Link>
@@ -65,11 +66,11 @@ export default function HomePage() {
                 flexWrap: "wrap",
               }}
             >
-              <span>NO LOGIN REQUIRED</span>
+              <span>OFFICIAL INSTAGRAM API</span>
               <span style={{ opacity: 0.4 }}>·</span>
-              <span>SCAN ANY PUBLIC PROFILE</span>
+              <span>READ-ONLY ACCESS</span>
               <span style={{ opacity: 0.4 }}>·</span>
-              <span>OAUTH OPTIONAL</span>
+              <span>NO PASSWORDS STORED</span>
             </div>
           </div>
 
@@ -109,14 +110,14 @@ export default function HomePage() {
             className="steps-grid"
           >
             <Step
-              num="01 — SCAN"
-              title="Enter any Instagram handle"
-              desc="No login required. RedBlog scans any public Instagram profile and extracts their Reels — videos, captions, thumbnails, and dates."
+              num="01 — CONNECT"
+              title="Authorize your account"
+              desc="Enter your Instagram handle and authorize RedBlog via Instagram's official OAuth. Read-only access — no passwords, no posting, nothing beyond your own media."
             />
             <Step
               num="02 — DEVELOP"
               title="Reels become entries"
-              desc="Each Reel is processed into a titled, dated blog entry with the video hosted and playable directly on your blog."
+              desc="We fetch your Reels through the Instagram Graph API and process each into a titled, dated blog entry with the video hosted and playable."
             />
             <Step
               num="03 — PRINT"
@@ -203,7 +204,7 @@ export default function HomePage() {
               price="₦4,500"
               priceSuffix="/mo"
               features={["Unlimited archived posts", "Custom domain", "Full theme control", "Auto-publish on new Reels"]}
-              cta="Scan any handle"
+              cta="Connect Instagram"
               ctaHref="/scan"
               featured={true}
             />

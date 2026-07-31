@@ -61,7 +61,7 @@ export default async function BlogListPage() {
                 Connect your Instagram and turn your Reels into a permanent, searchable archive.
               </p>
               <Link href="/scan" className="btn btn-primary">
-                Scan any Instagram →
+                Connect Instagram →
               </Link>
             </div>
           ) : (
