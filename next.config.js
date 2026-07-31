@@ -16,6 +16,19 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [
+        ...(config.externals || []),
+        "playwright-core",
+        "@sparticuz/chromium",
+        "chromium-bidi/lib/cjs/bidiMapper/BidiMapper",
+        "chromium-bidi/lib/cjs/cdp/CdpConnection",
+        "kerberos",
+      ];
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;

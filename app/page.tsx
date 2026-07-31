@@ -44,9 +44,12 @@ export default function HomePage() {
               lifted from someone else&apos;s account. It&apos;s your own
               footage, developed a second time.
             </p>
-            <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "38px" }}>
+            <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "38px", flexWrap: "wrap" }}>
               <Link href="/api/auth/login" className="btn btn-primary" style={{ padding: "14px 24px", fontSize: "13px" }}>
                 Connect Instagram →
+              </Link>
+              <Link href="/scan" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
+                Scan any handle →
               </Link>
               <Link href="#example" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px" }}>
                 See a live blog

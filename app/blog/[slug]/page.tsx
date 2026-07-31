@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatDate, relativeTime, truncate } from "@/lib/utils";
-import { Play, ExternalLink, ArrowLeft } from "lucide-react";
-import { PostEmbed } from "@/components/post-embed";
+import { Play, ExternalLink, ArrowLeft, Video } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -128,17 +127,28 @@ export default async function BlogPage({
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }} id="posts-grid">
               {posts.map((post) => (
                 <article key={post.id} className="card-dark" style={{ overflow: "hidden", padding: 0 }}>
-                  {/* Thumbnail / Embed */}
+                  {/* Thumbnail / Video preview */}
                   <div style={{ position: "relative", aspectRatio: "9/16", overflow: "hidden", background: "var(--bg-raised)" }}>
-                    {post.embedHtml ? (
-                      <PostEmbed embedHtml={post.embedHtml} />
-                    ) : post.thumbnailUrl ? (
+                    {post.thumbnailUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={post.thumbnailUrl} alt={post.caption || "Instagram post"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <div style={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "center" }}>
                         <Play style={{ width: "40px", height: "40px", color: "var(--gray)" }} />
                       </div>
+                    )}
+                    {/* Play overlay */}
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                      <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Play style={{ width: "20px", height: "20px", color: "var(--paper)" }} />
+                      </div>
+                    </div>
+                    {/* Hosted badge */}
+                    {post.videoFilePath && (
+                      <span className="badge-dark" style={{ position: "absolute", top: "10px", left: "10px", background: "rgba(232, 64, 44, 0.85)", color: "var(--paper)", backdropFilter: "blur(4px)" }}>
+                        <Video style={{ width: "10px", height: "10px" }} />
+                        Hosted
+                      </span>
                     )}
                   </div>
 

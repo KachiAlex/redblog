@@ -15,6 +15,7 @@ model Creator {
   accessToken   String
   refreshToken  String?
   tokenExpiry   DateTime?
+  scannedFrom   String   @default("oauth")
   connectedAt   DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -33,7 +34,10 @@ model Post {
   embedTitle   String?
   caption      String?
   thumbnailUrl String?
+  videoUrl     String?
+  videoFilePath String?
   mediaType    String    @default("VIDEO")
+  source       String    @default("oauth")
   publishedAt  DateTime
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

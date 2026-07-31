@@ -65,6 +65,9 @@ export function Navbar() {
           <Link href="/blog" style={{ color: "var(--gray)", transition: "color 0.2s" }}>
             Explore
           </Link>
+          <Link href="/scan" style={{ color: "var(--red-bright)", transition: "color 0.2s" }}>
+            Scan a handle
+          </Link>
           <Link href="/dashboard" className="btn btn-ghost">
             Log in
           </Link>

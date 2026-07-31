@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatDate, truncate } from "@/lib/utils";
 import { PostEmbed } from "@/components/post-embed";
-import { ArrowLeft, ExternalLink, Play } from "lucide-react";
+import { ArrowLeft, ExternalLink, Play, Video } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -92,10 +92,26 @@ export default async function IndividualPostPage({
             {post.embedTitle || truncate(post.caption || "Untitled Post", 100)}
           </h1>
 
-          {/* Video Embed */}
+          {/* Video Player — native hosted video first, then oEmbed fallback */}
           <div style={{ marginTop: "32px", borderRadius: "6px", overflow: "hidden", border: "1px solid var(--line)" }}>
-            <div style={{ position: "relative", aspectRatio: "9/16", maxHeight: "70vh", margin: "0 auto" }}>
-              {post.embedHtml ? (
+            <div style={{ position: "relative", aspectRatio: "9/16", maxHeight: "70vh", margin: "0 auto", background: "#000" }}>
+              {post.videoFilePath ? (
+                <video
+                  src={post.videoFilePath}
+                  poster={post.thumbnailUrl || undefined}
+                  controls
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
+              ) : post.videoUrl ? (
+                <video
+                  src={post.videoUrl}
+                  poster={post.thumbnailUrl || undefined}
+                  controls
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
+              ) : post.embedHtml ? (
                 <PostEmbed embedHtml={post.embedHtml} />
               ) : post.thumbnailUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -108,12 +124,22 @@ export default async function IndividualPostPage({
             </div>
           </div>
 
-          {/* Fallback link if embed unavailable */}
-          {!post.embedHtml && (
+          {/* Hosting badge */}
+          {post.videoFilePath && (
+            <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span className="badge-dark" style={{ background: "rgba(232, 64, 44, 0.15)", color: "var(--red-bright)" }}>
+                <Video style={{ width: "12px", height: "12px" }} />
+                Hosted on RedBlog
+              </span>
+            </div>
+          )}
+
+          {/* Fallback link if no video and no embed */}
+          {!post.videoFilePath && !post.videoUrl && !post.embedHtml && (
             <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: "8px", border: "1px solid var(--line)", background: "var(--bg-raised)", borderRadius: "4px", padding: "12px 16px", fontSize: "13px", color: "var(--gray)" }} className="font-mono-label">
               <Play style={{ width: "14px", height: "14px", flexShrink: 0 }} />
               <span>
-                Inline playback unavailable.{" "}
+                Inline playback unavailable. {" "}
                 <a href={post.permalink} target="_blank" rel="noopener noreferrer" style={{ color: "var(--red-bright)", textDecoration: "underline" }}>
                   Watch on Instagram
                 </a>
