@@ -12,6 +12,7 @@ const newsreader = Newsreader({
   subsets: ["latin"],
   variable: "--font-newsreader",
   display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 const plexMono = IBM_Plex_Mono({
