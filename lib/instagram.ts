@@ -1,0 +1,95 @@
+export const INSTAGRAM_AUTH_URL = "https://api.instagram.com/oauth/authorize";
+export const INSTAGRAM_TOKEN_URL = "https://api.instagram.com/oauth/access_token";
+export const INSTAGRAM_GRAPH_BASE = "https://graph.instagram.com";
+export const INSTAGRAM_OEMBED_URL = "https://graph.facebook.com/v19.0/instagram_oembed";
+
+export function getInstagramAuthUrl(state: string): string {
+  const params = new URLSearchParams({
+    client_id: process.env.INSTAGRAM_CLIENT_ID || "",
+    redirect_uri: process.env.INSTAGRAM_REDIRECT_URI || "",
+    response_type: "code",
+    scope: "user_profile user_media",
+    state,
+  });
+  return `${INSTAGRAM_AUTH_URL}?${params.toString()}`;
+}
+
+export async function exchangeCodeForToken(code: string) {
+  const res = await fetch(INSTAGRAM_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: process.env.INSTAGRAM_CLIENT_ID || "",
+      client_secret: process.env.INSTAGRAM_CLIENT_SECRET || "",
+      grant_type: "authorization_code",
+      redirect_uri: process.env.INSTAGRAM_REDIRECT_URI || "",
+      code,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Token exchange failed: ${err}`);
+  }
+
+  return res.json();
+}
+
+export async function getLongLivedToken(shortLivedToken: string) {
+  const params = new URLSearchParams({
+    grant_type: "ig_exchange_token",
+    client_secret: process.env.INSTAGRAM_CLIENT_SECRET || "",
+    access_token: shortLivedToken,
+  });
+  const res = await fetch(
+    `${INSTAGRAM_GRAPH_BASE}/access_token?${params.toString()}`
+  );
+  if (!res.ok) throw new Error("Failed to get long-lived token");
+  return res.json();
+}
+
+export async function refreshLongLivedToken(token: string) {
+  const params = new URLSearchParams({
+    grant_type: "ig_refresh_token",
+    access_token: token,
+  });
+  const res = await fetch(
+    `${INSTAGRAM_GRAPH_BASE}/refresh_access_token?${params.toString()}`
+  );
+  if (!res.ok) throw new Error("Failed to refresh token");
+  return res.json();
+}
+
+export async function getInstagramProfile(token: string) {
+  const res = await fetch(
+    `${INSTAGRAM_GRAPH_BASE}/me?fields=id,username,account_type,media_count&access_token=${token}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch profile");
+  return res.json();
+}
+
+export async function getMedia(token: string, limit = 25) {
+  const res = await fetch(
+    `${INSTAGRAM_GRAPH_BASE}/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=${limit}&access_token=${token}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch media");
+  return res.json();
+}
+
+export async function getOEmbed(permalink: string, accessToken?: string) {
+  const params = new URLSearchParams({
+    url: permalink,
+  });
+  if (accessToken) {
+    params.set("access_token", accessToken);
+  } else if (process.env.META_APP_ACCESS_TOKEN) {
+    params.set("access_token", process.env.META_APP_ACCESS_TOKEN);
+  }
+
+  const res = await fetch(`${INSTAGRAM_OEMBED_URL}?${params.toString()}`);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`oEmbed fetch failed: ${err}`);
+  }
+  return res.json();
+}

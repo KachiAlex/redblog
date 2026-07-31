@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Creator {
+  id            String   @id @default(cuid())
+  igUserId      String   @unique
+  igUsername    String   @unique
+  igProfilePic  String?
+  accessToken   String
+  refreshToken  String?
+  tokenExpiry   DateTime?
+  connectedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  posts       Post[]
+  blogPage    BlogPage?
+  analytics   Analytics[]
+}
+
+model Post {
+  id           String    @id @default(cuid())
+  creatorId    String
+  creator      Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  igPostId     String    @unique
+  permalink    String
+  embedHtml    String?
+  embedTitle   String?
+  caption      String?
+  thumbnailUrl String?
+  mediaType    String    @default("VIDEO")
+  publishedAt  DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([creatorId])
+  @@index([publishedAt])
+}
+
+model BlogPage {
+  id            String   @id @default(cuid())
+  creatorId     String   @unique
+  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  slug          String   @unique
+  customDomain  String?
+  themePrimary  String   @default("#ec4899")
+  themeAccent   String   @default("#f97316")
+  themeLayout   String   @default("grid")
+  title         String?
+  bio           String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  creatorId   String
+  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  postId      String?
+  pageViews   Int      @default(0)
+  date        DateTime @default(now())
+
+  @@index([creatorId])
+  @@index([date])
+}

@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ink: #1b1815;
+    --paper: #f6f1e7;
+    --paper-dim: #ece5d4;
+    --bg: #121014;
+    --bg-raised: #1a1720;
+    --red: #c1352b;
+    --red-bright: #e8402c;
+    --gray: #8a8578;
+    --line: rgba(246, 241, 231, 0.12);
+    --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+    --font-serif: var(--font-newsreader), "Newsreader", Georgia, serif;
+    --font-mono: var(--font-plex-mono), "IBM Plex Mono", monospace;
+  }
+
+  * {
+    border-color: var(--line);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--red);
+    color: var(--paper);
+  }
+}
+
+@layer components {
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--red-bright);
+  }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    padding: 11px 20px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+
+  .btn-primary {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .btn-primary:hover {
+    background: var(--red-bright);
+    color: var(--paper);
+  }
+
+  .btn-ghost {
+    border-color: var(--line);
+    color: var(--paper);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--paper);
+  }
+
+  .card-dark {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-raised);
+    transition: border-color 0.2s;
+  }
+
+  .card-dark:hover {
+    border-color: rgba(246, 241, 231, 0.25);
+  }
+
+  .card-paper {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 6px;
+  }
+
+  .input-dark {
+    width: 100%;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 11px 14px;
+    color: var(--paper);
+    font-size: 14px;
+    font-family: var(--font-sans);
+    transition: border-color 0.2s;
+  }
+
+  .input-dark:focus {
+    outline: none;
+    border-color: var(--red-bright);
+  }
+
+  .input-dark::placeholder {
+    color: var(--gray);
+  }
+
+  .badge-dark {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  .rule {
+    border: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .font-serif-display {
+    font-family: var(--font-serif);
+    font-weight: 500;
+  }
+
+  .font-mono-label {
+    font-family: var(--font-mono);
+  }
+
+  .skeleton-dark {
+    background: linear-gradient(90deg, var(--bg-raised) 0%, var(--bg) 50%, var(--bg-raised) 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s linear infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  @keyframes drift1 { 0%,100% { transform: rotate(-9deg) translateY(0); } 50% { transform: rotate(-7deg) translateY(-9px); } }
+  @keyframes drift2 { 0%,100% { transform: rotate(6deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-12px); } }
+  @keyframes drift3 { 0%,100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(-2deg) translateY(-7px); } }
+
+  .anim-drift1 { animation: drift1 9s ease-in-out infinite; }
+  .anim-drift2 { animation: drift2 7.5s ease-in-out infinite; }
+  .anim-drift3 { animation: drift3 8.5s ease-in-out infinite; }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
