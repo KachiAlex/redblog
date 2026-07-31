@@ -41,8 +41,8 @@ export default async function PostsPage() {
               <p style={{ color: "var(--gray)", fontSize: "14px", marginBottom: "24px" }}>
                 Connect your Instagram and sync to see your posts here.
               </p>
-              <Link href="/api/auth/login" className="btn btn-primary">
-                Connect Instagram →
+              <Link href="/scan" className="btn btn-primary">
+                Scan any Instagram →
               </Link>
             </div>
           ) : (

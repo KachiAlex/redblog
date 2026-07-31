@@ -38,18 +38,16 @@ export default function HomePage() {
                 marginBottom: "34px",
               }}
             >
-              Connect your Instagram account and RedBlog turns your Reels into a
-              permanent, searchable blog — hosted by you, credited to you,
-              indexed by Google. Nothing is downloaded, screen-recorded, or
-              lifted from someone else&apos;s account. It&apos;s your own
-              footage, developed a second time.
+              Enter any Instagram handle and RedBlog turns their Reels into a
+              permanent, searchable blog — hosted, credited, and indexed by
+              Google. No login required. Scan any public profile in seconds.
             </p>
             <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "38px", flexWrap: "wrap" }}>
-              <Link href="/api/auth/login" className="btn btn-primary" style={{ padding: "14px 24px", fontSize: "13px" }}>
-                Connect Instagram →
+              <Link href="/scan" className="btn btn-primary" style={{ padding: "14px 24px", fontSize: "13px" }}>
+                Scan any Instagram →
               </Link>
-              <Link href="/scan" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
-                Scan any handle →
+              <Link href="/api/auth/login" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
+                Connect via OAuth →
               </Link>
               <Link href="#example" className="btn btn-ghost" style={{ padding: "14px 22px", fontSize: "13px" }}>
                 See a live blog
@@ -67,11 +65,11 @@ export default function HomePage() {
                 flexWrap: "wrap",
               }}
             >
-              <span>OFFICIAL META GRAPH API</span>
+              <span>NO LOGIN REQUIRED</span>
               <span style={{ opacity: 0.4 }}>·</span>
-              <span>READ-ONLY ACCESS</span>
+              <span>SCAN ANY PUBLIC PROFILE</span>
               <span style={{ opacity: 0.4 }}>·</span>
-              <span>NO PASSWORDS STORED</span>
+              <span>OAUTH OPTIONAL</span>
             </div>
           </div>
 
@@ -111,14 +109,14 @@ export default function HomePage() {
             className="steps-grid"
           >
             <Step
-              num="01 — EXPOSE"
-              title="Connect your account"
-              desc="Sign in with Instagram Login. RedBlog requests read-only access to your own posts — nothing else, and no password ever touches our servers."
+              num="01 — SCAN"
+              title="Enter any Instagram handle"
+              desc="No login required. RedBlog scans any public Instagram profile and extracts their Reels — videos, captions, thumbnails, and dates."
             />
             <Step
               num="02 — DEVELOP"
               title="Reels become entries"
-              desc="New Reels are pulled through Instagram's official API within minutes and processed into a titled, dated blog entry with the video still playing."
+              desc="Each Reel is processed into a titled, dated blog entry with the video hosted and playable directly on your blog."
             />
             <Step
               num="03 — PRINT"
@@ -197,7 +195,7 @@ export default function HomePage() {
               priceSuffix=""
               features={["1 connected account", "Up to 20 archived posts", "Redblog.app subdomain", "Standard theme"]}
               cta="Start free"
-              ctaHref="/api/auth/login"
+              ctaHref="/scan"
               featured={false}
             />
             <Plan
@@ -205,8 +203,8 @@ export default function HomePage() {
               price="₦4,500"
               priceSuffix="/mo"
               features={["Unlimited archived posts", "Custom domain", "Full theme control", "Auto-publish on new Reels"]}
-              cta="Connect Instagram"
-              ctaHref="/api/auth/login"
+              cta="Scan any handle"
+              ctaHref="/scan"
               featured={true}
             />
             <Plan
@@ -215,7 +213,7 @@ export default function HomePage() {
               priceSuffix=""
               features={["Multiple connected accounts", "White-label for clients", "API access", "Priority support"]}
               cta="Talk to us"
-              ctaHref="/api/auth/login"
+              ctaHref="/scan"
               featured={false}
             />
           </div>

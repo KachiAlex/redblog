@@ -20,12 +20,20 @@ export function Footer() {
         >
           RedBlog
         </Link>
-        <span
-          className="font-mono-label"
-          style={{ fontSize: "11px", color: "var(--gray)", letterSpacing: "0.04em" }}
-        >
-          BUILT ON THE OFFICIAL INSTAGRAM GRAPH API — NO SCRAPING, NO REHOSTING
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+          <Link href="/privacy" className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)" }}>
+            Privacy
+          </Link>
+          <Link href="/terms" className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)" }}>
+            Terms
+          </Link>
+          <span
+            className="font-mono-label"
+            style={{ fontSize: "11px", color: "var(--gray)", letterSpacing: "0.04em" }}
+          >
+            INSTAGRAM ARCHIVE PLATFORM
+          </span>
+        </div>
       </div>
     </footer>
   );

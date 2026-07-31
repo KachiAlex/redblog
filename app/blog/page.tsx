@@ -60,8 +60,8 @@ export default async function BlogListPage() {
               <p style={{ color: "var(--gray)", fontSize: "15px", maxWidth: "360px", marginBottom: "28px" }}>
                 Connect your Instagram and turn your Reels into a permanent, searchable archive.
               </p>
-              <Link href="/api/auth/login" className="btn btn-primary">
-                Connect Instagram →
+              <Link href="/scan" className="btn btn-primary">
+                Scan any Instagram →
               </Link>
             </div>
           ) : (

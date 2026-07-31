@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { CheckCircle2, Instagram } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { DashboardContent } from "@/components/dashboard-content";
@@ -90,9 +90,11 @@ function NotConnectedState() {
       <p style={{ color: "var(--gray)", fontSize: "15px", maxWidth: "380px", marginBottom: "28px", lineHeight: 1.6 }}>
         Once connected, RedBlog automatically syncs your Reels and develops them into a permanent, searchable archive. It takes less than a minute.
       </p>
-      <Link href="/api/auth/login" className="btn btn-primary">
-        <Instagram style={{ width: "16px", height: "16px" }} />
-        Connect Instagram →
+      <Link href="/scan" className="btn btn-primary">
+        Scan any Instagram →
+      </Link>
+      <Link href="/api/auth/login" className="btn btn-ghost" style={{ marginTop: "12px", borderColor: "var(--red-bright)", color: "var(--red-bright)" }}>
+        Or connect via OAuth
       </Link>
     </div>
   );
