@@ -44,6 +44,7 @@ export default async function CampaignsPage() {
               initialCampaigns={JSON.parse(JSON.stringify(campaigns))}
               textProviders={listTextProviders()}
               imageProviders={listImageProviders()}
+              initialCredits={creator.credits}
             />
           )}
         </div>

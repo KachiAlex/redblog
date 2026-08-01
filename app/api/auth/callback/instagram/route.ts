@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
         accessToken: encryptedToken,
         tokenExpiry,
         scannedFrom: "oauth",
+        freeCreditsExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
     });
     console.log(`[oauth callback] Creator upserted: ${creator.id}`);

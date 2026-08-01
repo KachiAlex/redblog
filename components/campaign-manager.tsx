@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Trash2, RefreshCw, Check, X, Clock, ImageOff } from "lucide-react";
+import { Sparkles, Trash2, RefreshCw, Check, X, Clock, ImageOff, Zap } from "lucide-react";
+import { CreditsModal } from "@/components/credits-modal";
 import { formatDate } from "@/lib/utils";
 
 type ScheduledPost = {
@@ -27,7 +28,7 @@ type Campaign = {
   posts: ScheduledPost[];
 };
 
-type ProviderOption = { id: string; label: string; costHint: string };
+type ProviderOption = { id: string; label: string; credits: number };
 
 const inputStyle: React.CSSProperties = {
   background: "var(--bg-raised)",
@@ -93,16 +94,29 @@ export function CampaignManager({
   initialCampaigns,
   textProviders,
   imageProviders,
+  initialCredits,
 }: {
   creatorId: string;
   igUsername: string;
   initialCampaigns: Campaign[];
   textProviders: ProviderOption[];
   imageProviders: ProviderOption[];
+  initialCredits: number;
 }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [showWizard, setShowWizard] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
+  const [credits, setCredits] = useState(initialCredits);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+
+  function refreshCredits() {
+    fetch(`/api/credits/balance?creatorId=${creatorId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.credits !== undefined) setCredits(data.credits);
+      })
+      .catch(() => {});
+  }
 
   function handleCreated(campaign: Campaign, newWarning?: string) {
     setCampaigns((prev) => [campaign, ...prev]);
@@ -130,12 +144,32 @@ export function CampaignManager({
             GENERATE & SCHEDULE DAYS, WEEKS, OR MONTHS OF POSTS FROM A SINGLE BRIEF
           </span>
         </div>
-        {!showWizard && (
-          <button onClick={() => setShowWizard(true)} className="btn btn-primary">
-            <Sparkles style={{ width: "14px", height: "14px" }} />
-            New Campaign
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button
+            onClick={() => setShowCreditsModal(true)}
+            className="card-dark"
+            style={{
+              padding: "8px 16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: "pointer",
+              border: "1px solid var(--line)",
+              borderRadius: "6px",
+            }}
+          >
+            <Zap style={{ width: "14px", height: "14px", color: "var(--red-bright)" }} />
+            <span className="font-mono-label" style={{ fontSize: "13px", color: "var(--paper)" }}>
+              {credits} credits
+            </span>
           </button>
-        )}
+          {!showWizard && (
+            <button onClick={() => setShowWizard(true)} className="btn btn-primary">
+              <Sparkles style={{ width: "14px", height: "14px" }} />
+              New Campaign
+            </button>
+          )}
+        </div>
       </div>
 
       {warning && (
@@ -147,12 +181,22 @@ export function CampaignManager({
         </div>
       )}
 
+      <CreditsModal
+        open={showCreditsModal}
+        onClose={() => setShowCreditsModal(false)}
+        creatorId={creatorId}
+        onPurchased={refreshCredits}
+      />
+
       {showWizard && (
         <CampaignWizard
           creatorId={creatorId}
           igUsername={igUsername}
           textProviders={textProviders}
           imageProviders={imageProviders}
+          credits={credits}
+          onCreditsChanged={refreshCredits}
+          onShowBuyCredits={() => setShowCreditsModal(true)}
           onCreated={handleCreated}
           onCancel={() => setShowWizard(false)}
         />
@@ -194,6 +238,9 @@ function CampaignWizard({
   igUsername,
   textProviders,
   imageProviders,
+  credits,
+  onCreditsChanged,
+  onShowBuyCredits,
   onCreated,
   onCancel,
 }: {
@@ -201,6 +248,9 @@ function CampaignWizard({
   igUsername: string;
   textProviders: ProviderOption[];
   imageProviders: ProviderOption[];
+  credits: number;
+  onCreditsChanged: () => void;
+  onShowBuyCredits: () => void;
   onCreated: (campaign: Campaign, warning?: string) => void;
   onCancel: () => void;
 }) {
@@ -220,6 +270,16 @@ function CampaignWizard({
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     if (!context.trim()) return;
+
+    const totalCost =
+      (textProviders.find((p) => p.id === textProvider)?.credits || 0) +
+      (imageProviders.find((p) => p.id === imageProvider)?.credits || 0);
+
+    if (totalCost > credits) {
+      onShowBuyCredits();
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -239,6 +299,7 @@ function CampaignWizard({
       });
       const data = await res.json();
       if (data.success) {
+        onCreditsChanged();
         onCreated(data.campaign, data.warning);
       } else {
         setError(data.error || "Something went wrong generating your campaign. Please try again.");
@@ -298,7 +359,7 @@ function CampaignWizard({
           <label style={labelStyle}>Caption model</label>
           <select value={textProvider} onChange={(e) => setTextProvider(e.target.value)} style={inputStyle}>
             {textProviders.map((p) => (
-              <option key={p.id} value={p.id}>{p.label} — {p.costHint}</option>
+              <option key={p.id} value={p.id}>{p.label} — {p.credits} credits</option>
             ))}
           </select>
         </div>
@@ -306,10 +367,33 @@ function CampaignWizard({
           <label style={labelStyle}>Image generation</label>
           <select value={imageProvider} onChange={(e) => setImageProvider(e.target.value)} style={inputStyle}>
             {imageProviders.map((p) => (
-              <option key={p.id} value={p.id}>{p.label} — {p.costHint}</option>
+              <option key={p.id} value={p.id}>{p.label} — {p.credits} credits</option>
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Credit cost summary */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 16px",
+        borderRadius: "4px",
+        background: "var(--bg-raised)",
+        border: "1px solid var(--line)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Zap style={{ width: "14px", height: "14px", color: "var(--red-bright)" }} />
+          <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
+            Total cost: <span style={{ color: "var(--paper)" }}>
+              {(textProviders.find((p) => p.id === textProvider)?.credits || 0) + (imageProviders.find((p) => p.id === imageProvider)?.credits || 0)} credits
+            </span>
+          </span>
+        </div>
+        <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
+          You have {credits} credits
+        </span>
       </div>
 
       {error && <Banner tone="error">{error}</Banner>}

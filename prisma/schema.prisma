@@ -17,6 +17,8 @@ model Creator {
   refreshToken  String?
   tokenExpiry   DateTime?
   scannedFrom   String   @default("oauth")
+  credits       Int      @default(5)
+  freeCreditsExpiry DateTime? @default(now())
   connectedAt   DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -25,6 +27,8 @@ model Creator {
   analytics   Analytics[]
   campaigns      Campaign[]
   scheduledPosts ScheduledPost[]
+  creditTransactions CreditTransaction[]
+  creditPurchases    CreditPurchase[]
 }
 
 model Post {
@@ -123,4 +127,35 @@ model Analytics {
 
   @@index([creatorId])
   @@index([date])
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  creatorId   String
+  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  amount      Int      // positive = purchase, negative = usage
+  action      String   // "purchase" | "text_generation" | "image_generation" | "regenerate" | "free_trial"
+  provider    String?  // which AI provider was used
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([creatorId])
+  @@index([createdAt])
+}
+
+model CreditPurchase {
+  id            String   @id @default(cuid())
+  creatorId     String
+  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  credits       Int      // credits purchased
+  amountPaid    Float    // in USD
+  currency      String   @default("USD")
+  provider      String   // "stripe" | "paystack"
+  status        String   @default("pending") // pending | completed | failed
+  reference     String?  // Stripe session ID or Paystack reference
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
 }

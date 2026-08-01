@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { regenerateCaption, generateImage, AiError } from "@/lib/ai";
 import { saveGeneratedImage } from "@/lib/images";
+import { REGENERATE_CREDITS, deductCredits } from "@/lib/credits";
 
 function friendlyErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof AiError) return err.message;
@@ -28,6 +29,13 @@ export async function POST(
     }
     if (["published", "publishing"].includes(post.status)) {
       return NextResponse.json({ error: "Cannot regenerate a post that is already publishing/published" }, { status: 400 });
+    }
+
+    if (post.creator.credits < REGENERATE_CREDITS) {
+      return NextResponse.json({
+        error: `Insufficient credits. Regeneration costs ${REGENERATE_CREDITS} credits but you have ${post.creator.credits}.`,
+        insufficientCredits: true,
+      }, { status: 402 });
     }
 
     const { caption, imagePrompt } = await regenerateCaption({
@@ -57,6 +65,14 @@ export async function POST(
       where: { id: params.id },
       data: { caption, imagePrompt, imageFilePath },
     });
+
+    await deductCredits(
+      post.creatorId,
+      REGENERATE_CREDITS,
+      "regenerate",
+      post.campaign?.textProvider,
+      `Regenerated post ${post.id}`
+    );
 
     return NextResponse.json({ success: true, post: updated, warning });
   } catch (err) {

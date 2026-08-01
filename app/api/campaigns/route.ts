@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { buildSchedule, generateCampaignPlan, generateImage, AiError, Cadence } from "@/lib/ai";
 import { saveGeneratedImage } from "@/lib/images";
+import { calculateGenerationCost, deductCredits } from "@/lib/credits";
 
 function friendlyErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof AiError) return err.message;
@@ -54,6 +55,20 @@ export async function POST(req: NextRequest) {
     const creator = await prisma.creator.findUnique({ where: { id: creatorId } });
     if (!creator) {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 });
+    }
+
+    const creditCost = calculateGenerationCost(
+      textProvider || "deepseek",
+      imageProvider || "openai-dalle3"
+    );
+
+    if (creator.credits < creditCost) {
+      return NextResponse.json({
+        error: `Insufficient credits. This campaign costs ${creditCost} credits but you have ${creator.credits}. Please purchase more credits.`,
+        insufficientCredits: true,
+        creditsNeeded: creditCost,
+        creditsAvailable: creator.credits,
+      }, { status: 402 });
     }
 
     const start = new Date(startDate);
@@ -128,6 +143,14 @@ export async function POST(req: NextRequest) {
       imageFailures > 0
         ? `${lastImageError} ${imageFailures} of ${posts.length} post(s) were created without an image — you can regenerate them individually.`
         : undefined;
+
+    await deductCredits(
+      creatorId,
+      creditCost,
+      "text_generation",
+      `${textProvider || "deepseek"}+${imageProvider || "openai-dalle3"}`,
+      `Campaign: ${context.slice(0, 50)}`
+    );
 
     return NextResponse.json({ success: true, campaign: { ...campaign, posts }, warning });
   } catch (err) {

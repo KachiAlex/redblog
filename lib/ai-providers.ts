@@ -7,7 +7,7 @@
 export interface TextProviderConfig {
   id: string;
   label: string;
-  costHint: string;
+  credits: number;
   baseUrl: string;
   defaultModel: string;
   apiKeyEnv: string;
@@ -18,7 +18,7 @@ export interface TextProviderConfig {
 export interface ImageProviderConfig {
   id: string;
   label: string;
-  costHint: string;
+  credits: number;
   baseUrl: string;
   defaultModel: string;
   apiKeyEnv: string;
@@ -31,8 +31,8 @@ export interface ImageProviderConfig {
 export const TEXT_PROVIDERS: Record<string, TextProviderConfig> = {
   openai: {
     id: "openai",
-    label: "OpenAI (GPT-4o mini)",
-    costHint: "~$0.15 / 1M input tokens",
+    label: "Premium AI",
+    credits: 2,
     baseUrl: "https://api.openai.com/v1",
     defaultModel: "gpt-4o-mini",
     apiKeyEnv: "OPENAI_API_KEY",
@@ -41,8 +41,8 @@ export const TEXT_PROVIDERS: Record<string, TextProviderConfig> = {
   },
   deepseek: {
     id: "deepseek",
-    label: "DeepSeek (cheapest)",
-    costHint: "~$0.014 / 1M input tokens",
+    label: "Budget AI",
+    credits: 1,
     baseUrl: "https://api.deepseek.com/v1",
     defaultModel: "deepseek-chat",
     apiKeyEnv: "DEEPSEEK_API_KEY",
@@ -51,8 +51,8 @@ export const TEXT_PROVIDERS: Record<string, TextProviderConfig> = {
   },
   kimi: {
     id: "kimi",
-    label: "Kimi / Moonshot",
-    costHint: "~$0.15 / 1M input tokens",
+    label: "Standard AI",
+    credits: 2,
     baseUrl: "https://api.moonshot.ai/v1",
     defaultModel: "kimi-latest",
     apiKeyEnv: "MOONSHOT_API_KEY",
@@ -66,8 +66,8 @@ export const DEFAULT_TEXT_PROVIDER = "deepseek";
 export const IMAGE_PROVIDERS: Record<string, ImageProviderConfig> = {
   "openai-dalle3": {
     id: "openai-dalle3",
-    label: "OpenAI DALL-E 3",
-    costHint: "~$0.04 / image",
+    label: "Premium Image",
+    credits: 4,
     baseUrl: "https://api.openai.com/v1",
     defaultModel: "dall-e-3",
     apiKeyEnv: "OPENAI_API_KEY",
@@ -77,8 +77,8 @@ export const IMAGE_PROVIDERS: Record<string, ImageProviderConfig> = {
   },
   "openai-dalle2": {
     id: "openai-dalle2",
-    label: "OpenAI DALL-E 2 (cheaper)",
-    costHint: "~$0.02 / image",
+    label: "Standard Image",
+    credits: 3,
     baseUrl: "https://api.openai.com/v1",
     defaultModel: "dall-e-2",
     apiKeyEnv: "OPENAI_API_KEY",
@@ -88,8 +88,8 @@ export const IMAGE_PROVIDERS: Record<string, ImageProviderConfig> = {
   },
   together: {
     id: "together",
-    label: "Together AI (FLUX schnell)",
-    costHint: "~$0.003 / image (free tier available)",
+    label: "Budget Image",
+    credits: 2,
     baseUrl: "https://api.together.xyz/v1",
     defaultModel: "black-forest-labs/FLUX.1-schnell-Free",
     apiKeyEnv: "TOGETHER_API_KEY",
@@ -100,7 +100,7 @@ export const IMAGE_PROVIDERS: Record<string, ImageProviderConfig> = {
   none: {
     id: "none",
     label: "No image (caption only)",
-    costHint: "Free",
+    credits: 0,
     baseUrl: "",
     defaultModel: "",
     apiKeyEnv: "",
@@ -142,9 +142,17 @@ export function resolveImageConfig(id?: string) {
 
 /** Options safe to expose to the client for picking a provider in the UI. */
 export function listTextProviders() {
-  return Object.values(TEXT_PROVIDERS).map(({ id, label, costHint }) => ({ id, label, costHint }));
+  return Object.values(TEXT_PROVIDERS).map(({ id, label, credits }) => ({ id, label, credits }));
 }
 
 export function listImageProviders() {
-  return Object.values(IMAGE_PROVIDERS).map(({ id, label, costHint }) => ({ id, label, costHint }));
+  return Object.values(IMAGE_PROVIDERS).map(({ id, label, credits }) => ({ id, label, credits }));
+}
+
+export function getTextProviderCredits(id?: string): number {
+  return getTextProvider(id).credits;
+}
+
+export function getImageProviderCredits(id?: string): number {
+  return getImageProvider(id).credits;
 }
