@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Play, Video } from "lucide-react";
 import Link from "next/link";
+import { truncate, relativeTime } from "@/lib/utils";
 
 interface PostCardProps {
   post: {
@@ -12,16 +13,14 @@ interface PostCardProps {
     videoFilePath: string | null;
     videoUrl: string | null;
     permalink: string;
-    publishedAt: Date;
+    publishedAt: string;
     embedTitle: string | null;
     tags: string[];
   };
   blogSlug: string;
-  truncate: (s: string, n: number) => string;
-  relativeTime: (d: string) => string;
 }
 
-export function PostCard({ post, blogSlug, truncate, relativeTime }: PostCardProps) {
+export function PostCard({ post, blogSlug }: PostCardProps) {
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -107,7 +106,7 @@ export function PostCard({ post, blogSlug, truncate, relativeTime }: PostCardPro
       {/* Post Info */}
       <div style={{ padding: "20px" }}>
         <span className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)" }}>
-          {relativeTime(post.publishedAt.toISOString())}
+          {relativeTime(post.publishedAt)}
         </span>
         <h2 className="font-serif-display" style={{ fontSize: "16px", marginTop: "8px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
           {post.embedTitle || (post.caption ? truncate(post.caption, 80) : "Untitled post")}

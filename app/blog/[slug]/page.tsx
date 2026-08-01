@@ -188,10 +188,11 @@ export default async function BlogPage({
               {posts.map((post) => (
                 <PostCard
                   key={post.id}
-                  post={post}
+                  post={{
+                    ...post,
+                    publishedAt: post.publishedAt.toISOString(),
+                  }}
                   blogSlug={blogPage.slug}
-                  truncate={truncate}
-                  relativeTime={relativeTime}
                 />
               ))}
             </div>
