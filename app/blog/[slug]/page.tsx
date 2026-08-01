@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { formatDate, relativeTime, truncate } from "@/lib/utils";
 import { Play, ExternalLink, ArrowLeft, Video } from "lucide-react";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { RescanButton } from "@/components/rescan-button";
 
 export const dynamic = "force-dynamic";
 
@@ -117,13 +118,14 @@ export default async function BlogPage({
                   {blogPage.bio}
                 </p>
               )}
-              <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "20px" }}>
+              <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
                 <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
                   {posts.length} REELS
                 </span>
                 <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
                   SINCE {formatDate(creator.connectedAt).toUpperCase()}
                 </span>
+                <RescanButton username={creator.igUsername} />
               </div>
             </div>
           </div>

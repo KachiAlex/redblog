@@ -8,29 +8,54 @@ import { relativeTime } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const kreatixCreator = await prisma.creator.findUnique({
-    where: { igUsername: "kreatixtech" },
-    select: {
-      id: true,
-      igUsername: true,
-      igProfilePic: true,
-      blogPage: { select: { slug: true } },
-      posts: {
+  // Fetch all blog pages with their creators and recent posts
+  const blogPages = await prisma.blogPage.findMany({
+    include: {
+      creator: {
         select: {
           id: true,
-          caption: true,
-          thumbnailUrl: true,
-          publishedAt: true,
-          mediaType: true,
+          igUsername: true,
+          igProfilePic: true,
+          posts: {
+            select: {
+              id: true,
+              caption: true,
+              thumbnailUrl: true,
+              publishedAt: true,
+              mediaType: true,
+            },
+            orderBy: { publishedAt: "desc" },
+            take: 3,
+          },
         },
-        orderBy: { publishedAt: "desc" },
-        take: 10,
       },
     },
+    orderBy: { createdAt: "desc" },
   });
 
-  const livePosts = (kreatixCreator?.posts ?? []).filter((p) => p.publishedAt).slice(0, 3);
-  const blogSlug = kreatixCreator?.blogPage?.slug || "kreatixtech";
+  // Collect all posts across all blogs, sorted by date
+  const allPosts = blogPages
+    .flatMap((bp) =>
+      bp.creator.posts.map((p) => ({
+        ...p,
+        blogSlug: bp.slug,
+        igUsername: bp.creator.igUsername,
+      }))
+    )
+    .filter((p) => p.publishedAt)
+    .sort((a, b) => (b.publishedAt!.getTime() - a.publishedAt!.getTime()))
+    .slice(0, 6);
+
+  // Keep kreatixtech as the featured blog for the "live example" section
+  const kreatixCreator = blogPages.find(
+    (bp) => bp.creator.igUsername === "kreatixtech"
+  )?.creator;
+  const livePosts = (kreatixCreator?.posts ?? [])
+    .filter((p) => p.publishedAt)
+    .slice(0, 3);
+  const blogSlug = kreatixCreator
+    ? blogPages.find((bp) => bp.creatorId === kreatixCreator.id)?.slug || "kreatixtech"
+    : "kreatixtech";
   return (
     <div>
       <Navbar />
@@ -220,6 +245,84 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* RECENTLY ARCHIVED — posts from all blogs */}
+      {allPosts.length > 0 && (
+        <section id="recent" style={{ padding: "0 0 110px" }} className="reveal">
+          <div className="wrap">
+            <div style={{ maxWidth: "560px", marginBottom: "40px" }}>
+              <span className="eyebrow">Fresh from the archive</span>
+              <h2
+                className="font-serif-display"
+                style={{ fontStyle: "italic", fontSize: "36px", marginTop: "14px", lineHeight: 1.2 }}
+              >
+                Recently developed.
+              </h2>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }} id="recent-grid">
+              {allPosts.map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.blogSlug}/${post.id}`}
+                  style={{ textDecoration: "none" }}
+                >
+                  <div
+                    style={{
+                      background: "var(--bg)",
+                      borderRadius: "4px",
+                      overflow: "hidden",
+                      aspectRatio: "9/16",
+                      position: "relative",
+                      transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    }}
+                    className="example-post-card"
+                  >
+                    <div style={{ width: "100%", height: "72%", position: "relative", overflow: "hidden", background: "var(--bg-raised)" }}>
+                      {post.thumbnailUrl && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={post.thumbnailUrl}
+                          alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
+                          loading="lazy"
+                        />
+                      )}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          width: 0,
+                          height: 0,
+                          borderTop: "6px solid transparent",
+                          borderBottom: "6px solid transparent",
+                          borderLeft: "10px solid rgba(246,241,231,0.85)",
+                          transform: "translate(-35%,-50%)",
+                          zIndex: 2,
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="font-mono-label"
+                      style={{ padding: "10px", fontSize: "9.5px", color: "#c9c4b8" }}
+                    >
+                      {post.caption ? post.caption.slice(0, 40) + (post.caption.length > 40 ? "..." : "") : "Untitled"}
+                      <span style={{ opacity: 0.55, marginTop: "3px", display: "block" }}>
+                        @{post.igUsername} &middot; {relativeTime(post.publishedAt!.toISOString()).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div style={{ marginTop: "32px", textAlign: "center" }}>
+              <Link href="/blog" className="btn btn-ghost" style={{ padding: "12px 22px", fontSize: "13px" }}>
+                Browse all blogs
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* PRICING */}
       <section id="pricing" style={{ padding: "0 0 120px" }} className="reveal">
         <div className="wrap">
@@ -273,12 +376,14 @@ export default async function HomePage() {
           .filmstrip { height: 380px !important; margin-top: 20px; }
           #example-card { grid-template-columns: 1fr !important; }
           #plans-grid { grid-template-columns: 1fr !important; max-width: 400px; margin: 0 auto; }
+          #recent-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 768px) {
           .steps-grid { grid-template-columns: 1fr !important; }
           .example-posts-grid { grid-template-columns: repeat(3, 1fr) !important; }
         }
         @media (max-width: 640px) {
+          #recent-grid { grid-template-columns: 1fr !important; max-width: 240px; margin: 0 auto; }
           .filmstrip { height: 280px !important; transform: scale(0.75); transform-origin: center; }
           .example-posts-grid { grid-template-columns: 1fr !important; max-width: 240px; margin: 0 auto; }
           #example-card { padding: 28px 20px !important; gap: 24px !important; }
