@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Play, ExternalLink, Film, LayoutGrid, List, Video, Images } from "lucide-react";
+import { Play, ExternalLink, Film, LayoutGrid, List, Video, Images, X } from "lucide-react";
 import { formatDate, relativeTime, truncate } from "@/lib/utils";
 
 interface PostData {
@@ -23,6 +23,7 @@ interface PostsViewProps {
 
 export function PostsView({ posts, blogSlug }: PostsViewProps) {
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [playingPost, setPlayingPost] = useState<PostData | null>(null);
 
   return (
     <>
@@ -85,91 +86,120 @@ export function PostsView({ posts, blogSlug }: PostsViewProps) {
                 cursor: "pointer",
                 transition: "transform 0.2s ease, border-color 0.2s ease",
               }}
+              onClick={() => {
+                if (post.mediaType === "VIDEO" && (post.videoUrl || post.thumbnailUrl)) {
+                  setPlayingPost(post);
+                } else if (blogSlug) {
+                  window.location.href = `/blog/${blogSlug}/${post.id}`;
+                }
+              }}
             >
-              <Link
-                href={blogSlug ? `/blog/${blogSlug}/${post.id}` : "#"}
-                style={{ display: "block", textDecoration: "none", color: "inherit" }}
-              >
-                {/* Thumbnail */}
-                <div style={{
-                  position: "relative",
-                  aspectRatio: "9/16",
-                  background: "var(--bg)",
-                  overflow: "hidden",
-                }}>
-                  {post.thumbnailUrl || post.videoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={post.thumbnailUrl || post.videoUrl || undefined}
-                      alt={post.caption ? truncate(post.caption, 40) : "Instagram post"}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
-                    />
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                      <Play style={{ width: "24px", height: "24px", color: "var(--gray)" }} />
-                    </div>
-                  )}
-                  {/* Type badge */}
+              {/* Thumbnail */}
+              <div style={{
+                position: "relative",
+                aspectRatio: "9/16",
+                background: "var(--bg)",
+                overflow: "hidden",
+              }}>
+                {post.thumbnailUrl || post.videoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={post.thumbnailUrl || post.videoUrl || undefined}
+                    alt={post.caption ? truncate(post.caption, 40) : "Instagram post"}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
+                  />
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                    <Play style={{ width: "24px", height: "24px", color: "var(--gray)" }} />
+                  </div>
+                )}
+                {/* Play overlay for videos */}
+                {post.mediaType === "VIDEO" && (
                   <div style={{
                     position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    background: "rgba(0,0,0,0.7)",
-                    borderRadius: "4px",
-                    padding: "4px 8px",
+                    inset: 0,
                     display: "flex",
                     alignItems: "center",
-                    gap: "4px",
-                  }}>
-                    {post.mediaType === "VIDEO" ? (
-                      <Video style={{ width: "12px", height: "12px", color: "var(--paper)" }} />
-                    ) : (
-                      <Images style={{ width: "12px", height: "12px", color: "var(--paper)" }} />
-                    )}
+                    justifyContent: "center",
+                    background: "rgba(0,0,0,0.2)",
+                    transition: "background 0.2s ease",
+                  }} className="play-overlay">
+                    <div style={{
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      background: "rgba(232,64,44,0.9)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                      <Play style={{ width: "20px", height: "20px", color: "white", fill: "white" }} />
+                    </div>
                   </div>
-                  {/* Hover overlay */}
-                  <div className="post-grid-overlay" style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                    padding: "12px",
-                    opacity: 0,
-                    transition: "opacity 0.2s ease",
-                  }}>
-                    <p style={{ fontSize: "12px", color: "var(--paper)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {post.caption ? truncate(post.caption, 80) : "Untitled post"}
-                    </p>
-                    <span className="font-mono-label" style={{ fontSize: "10px", color: "var(--gray)", marginTop: "4px" }}>
-                      {relativeTime(new Date(post.publishedAt))}
-                    </span>
-                  </div>
+                )}
+                {/* Type badge */}
+                <div style={{
+                  position: "absolute",
+                  top: "8px",
+                  right: "8px",
+                  background: "rgba(0,0,0,0.7)",
+                  borderRadius: "4px",
+                  padding: "4px 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}>
+                  {post.mediaType === "VIDEO" ? (
+                    <Video style={{ width: "12px", height: "12px", color: "var(--paper)" }} />
+                  ) : (
+                    <Images style={{ width: "12px", height: "12px", color: "var(--paper)" }} />
+                  )}
                 </div>
-                {/* Footer */}
-                <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span className="font-mono-label" style={{ fontSize: "10px", color: "var(--gray)" }}>
-                    {formatDate(new Date(post.publishedAt))}
+                {/* Hover overlay */}
+                <div className="post-grid-overlay" style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  padding: "12px",
+                  opacity: 0,
+                  transition: "opacity 0.2s ease",
+                }}>
+                  <p style={{ fontSize: "12px", color: "var(--paper)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {post.caption ? truncate(post.caption, 80) : "Untitled post"}
+                  </p>
+                  <span className="font-mono-label" style={{ fontSize: "10px", color: "var(--gray)", marginTop: "4px" }}>
+                    {relativeTime(new Date(post.publishedAt))}
                   </span>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    {blogSlug && (
-                      <span style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", color: "var(--gray)" }}>
-                        <Film style={{ width: "10px", height: "10px" }} />
-                      </span>
-                    )}
-                    <a
-                      href={post.permalink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ display: "flex", alignItems: "center", color: "var(--gray)" }}
-                    >
-                      <ExternalLink style={{ width: "10px", height: "10px" }} />
-                    </a>
-                  </div>
                 </div>
-              </Link>
+              </div>
+              {/* Footer */}
+              <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span className="font-mono-label" style={{ fontSize: "10px", color: "var(--gray)" }}>
+                  {formatDate(new Date(post.publishedAt))}
+                </span>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {blogSlug && (
+                    <span
+                      onClick={(e) => { e.stopPropagation(); window.location.href = `/blog/${blogSlug}/${post.id}`; }}
+                      style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", color: "var(--gray)", cursor: "pointer" }}
+                    >
+                      <Film style={{ width: "10px", height: "10px" }} />
+                    </span>
+                  )}
+                  <a
+                    href={post.permalink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ display: "flex", alignItems: "center", color: "var(--gray)" }}
+                  >
+                    <ExternalLink style={{ width: "10px", height: "10px" }} />
+                  </a>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -265,6 +295,111 @@ export function PostsView({ posts, blogSlug }: PostsViewProps) {
         </div>
       )}
 
+      {/* Video player modal */}
+      {playingPost && (
+        <div
+          onClick={() => setPlayingPost(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              maxWidth: "420px",
+              width: "100%",
+              maxHeight: "90vh",
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setPlayingPost(null)}
+              style={{
+                position: "absolute",
+                top: "-40px",
+                right: "0",
+                background: "none",
+                border: "none",
+                color: "var(--paper)",
+                cursor: "pointer",
+                padding: "8px",
+              }}
+              aria-label="Close"
+            >
+              <X style={{ width: "24px", height: "24px" }} />
+            </button>
+
+            {/* Video container */}
+            <div style={{
+              borderRadius: "8px",
+              overflow: "hidden",
+              border: "1px solid var(--line)",
+              background: "#000",
+            }}>
+              {playingPost.videoUrl ? (
+                <video
+                  src={playingPost.videoUrl}
+                  poster={playingPost.thumbnailUrl || undefined}
+                  controls
+                  autoPlay
+                  playsInline
+                  style={{ width: "100%", maxHeight: "80vh", display: "block" }}
+                />
+              ) : playingPost.thumbnailUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={playingPost.thumbnailUrl} alt={playingPost.caption || "Post"} style={{ width: "100%", display: "block" }} />
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "300px" }}>
+                  <Play style={{ width: "40px", height: "40px", color: "var(--gray)" }} />
+                </div>
+              )}
+            </div>
+
+            {/* Caption + actions */}
+            <div style={{ marginTop: "16px" }}>
+              {playingPost.caption && (
+                <p style={{ fontSize: "14px", color: "#c4beb1", lineHeight: 1.6, marginBottom: "12px" }}>
+                  {playingPost.caption}
+                </p>
+              )}
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <span className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)" }}>
+                  {formatDate(new Date(playingPost.publishedAt))}
+                </span>
+                <a
+                  href={playingPost.permalink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost"
+                  style={{ fontSize: "12px", padding: "6px 12px" }}
+                >
+                  <ExternalLink style={{ width: "12px", height: "12px" }} />
+                  Instagram
+                </a>
+                {blogSlug && (
+                  <Link
+                    href={`/blog/${blogSlug}/${playingPost.id}`}
+                    className="btn btn-ghost"
+                    style={{ fontSize: "12px", padding: "6px 12px" }}
+                  >
+                    <Film style={{ width: "12px", height: "12px" }} />
+                    Blog post
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .post-grid-card:hover {
           transform: translateY(-4px);
@@ -275,6 +410,9 @@ export function PostsView({ posts, blogSlug }: PostsViewProps) {
         }
         .post-grid-card:hover .post-grid-overlay {
           opacity: 1 !important;
+        }
+        .post-grid-card:hover .play-overlay {
+          background: rgba(0,0,0,0.4) !important;
         }
         @media (max-width: 768px) {
           #posts-grid-view {
