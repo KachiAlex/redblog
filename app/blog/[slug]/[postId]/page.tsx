@@ -108,7 +108,7 @@ export default async function IndividualPostPage({
                 />
               ) : post.videoUrl ? (
                 <video
-                  src={post.videoUrl}
+                  src={`/api/video-proxy/${post.id}`}
                   poster={post.thumbnailUrl || undefined}
                   controls
                   playsInline
