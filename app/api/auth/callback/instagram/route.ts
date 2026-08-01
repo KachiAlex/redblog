@@ -3,7 +3,6 @@ import { exchangeCodeForToken, getLongLivedToken, getInstagramProfile, getMedia 
 import { encrypt } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
-import { downloadVideo } from "@/lib/scraper";
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = getUrlParts(req);
@@ -12,20 +11,30 @@ export async function GET(req: NextRequest) {
   const storedState = req.cookies.get("oauth_state")?.value;
 
   if (!code || !state || state !== storedState) {
+    console.error("[oauth callback] Missing code/state or state mismatch");
     return NextResponse.redirect(new URL("/?error=auth_failed", origin));
   }
 
+  let igUserId: string | undefined;
+  let igUsername: string | undefined;
+
   try {
+    console.log("[oauth callback] Exchanging code for token...");
     const shortTokenRes = await exchangeCodeForToken(code);
     const shortToken = shortTokenRes.access_token;
+    console.log("[oauth callback] Got short-lived token");
 
+    console.log("[oauth callback] Exchanging for long-lived token...");
     const longTokenRes = await getLongLivedToken(shortToken);
     const longToken = longTokenRes.access_token;
     const expiresIn = longTokenRes.expires_in;
+    console.log("[oauth callback] Got long-lived token, expires_in:", expiresIn);
 
+    console.log("[oauth callback] Fetching profile...");
     const profile = await getInstagramProfile(longToken);
-    const igUserId = profile.id;
-    const igUsername = profile.username;
+    igUserId = profile.id;
+    igUsername = profile.username;
+    console.log(`[oauth callback] Profile: @${igUsername} (ID: ${igUserId})`);
 
     const encryptedToken = encrypt(longToken);
     const tokenExpiry = new Date(Date.now() + (expiresIn || 5184000) * 1000);
@@ -39,43 +48,33 @@ export async function GET(req: NextRequest) {
         scannedFrom: "oauth",
       },
       create: {
-        igUserId,
-        igUsername,
+        igUserId: igUserId!,
+        igUsername: igUsername!,
         accessToken: encryptedToken,
         tokenExpiry,
         scannedFrom: "oauth",
       },
     });
+    console.log(`[oauth callback] Creator upserted: ${creator.id}`);
 
     const blogPage = await prisma.blogPage.upsert({
       where: { creatorId: creator.id },
       update: {},
       create: {
         creatorId: creator.id,
-        slug: slugify(igUsername),
+        slug: slugify(igUsername!),
       },
     });
+    console.log(`[oauth callback] BlogPage upserted: ${blogPage.slug}`);
 
+    console.log("[oauth callback] Fetching media...");
     const mediaRes = await getMedia(longToken);
     const mediaItems = mediaRes.data || [];
+    console.log(`[oauth callback] Got ${mediaItems.length} media items`);
 
+    let savedCount = 0;
     for (const item of mediaItems) {
-      if (item.media_type === "VIDEO" || item.media_type === "CAROUSEL_ALBUM") {
-        let videoFilePath: string | null = null;
-
-        if (item.media_url && item.media_type === "VIDEO") {
-          try {
-            const downloaded = await downloadVideo(item.media_url, item.id);
-            if (downloaded) {
-              videoFilePath = process.env.VERCEL
-                ? `/api/videos/${item.id}.mp4`
-                : downloaded.filePath;
-            }
-          } catch {
-            // Video download may fail — continue with just the URL
-          }
-        }
-
+      try {
         await prisma.post.upsert({
           where: { igPostId: item.id },
           update: {
@@ -83,7 +82,6 @@ export async function GET(req: NextRequest) {
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
             videoUrl: item.media_url || null,
-            videoFilePath,
             publishedAt: new Date(item.timestamp),
           },
           create: {
@@ -93,21 +91,28 @@ export async function GET(req: NextRequest) {
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
             videoUrl: item.media_url || null,
-            videoFilePath,
             mediaType: item.media_type,
             source: "oauth",
             publishedAt: new Date(item.timestamp),
           },
         });
+        savedCount++;
+      } catch (postErr) {
+        console.error(`[oauth callback] Failed to save post ${item.id}:`, postErr);
       }
     }
+    console.log(`[oauth callback] Saved ${savedCount}/${mediaItems.length} posts`);
 
     const res = NextResponse.redirect(new URL(`/dashboard?connected=1`, origin));
     res.cookies.delete("oauth_state");
     return res;
   } catch (err) {
-    console.error("OAuth callback error:", err);
-    return NextResponse.redirect(new URL("/?error=callback_failed", origin));
+    console.error("[oauth callback] Error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    const redirectUrl = new URL("/?error=callback_failed", origin);
+    redirectUrl.searchParams.set("detail", msg.slice(0, 200));
+    if (igUsername) redirectUrl.searchParams.set("username", igUsername);
+    return NextResponse.redirect(redirectUrl);
   }
 }
 
