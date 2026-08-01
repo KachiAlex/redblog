@@ -36,7 +36,22 @@ DATABASE_URL="file:./dev.db"
 TOKEN_ENCRYPTION_KEY=your_32_byte_hex_encryption_key
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret
+
+# AI Studio (campaign generation + image generation)
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_IMAGE_MODEL=dall-e-3
+
+# Publicly reachable base URL the poll-worker uses so Instagram can fetch
+# generated images when publishing (e.g. https://yourapp.vercel.app)
+APP_BASE_URL=http://localhost:3000
 ```
+
+> **Note:** publishing scheduled posts requires the connected Instagram account
+> to be a Business/Creator account and to have re-authorized with the
+> `instagram_business_content_publish` scope (already requested by `/api/auth/login`).
+> Existing connections made before this feature was added will need to
+> reconnect via **Settings → Disconnect** then **Connect Instagram** again.
 
 ### 3. Set Up Meta Developer App
 
@@ -117,6 +132,9 @@ socialblog/
 - **Individual Post Pages:** SEO-friendly URLs with OG metadata per post
 - **Creator Dashboard:** View synced posts, trigger manual sync, see stats
 - **Theme Customization:** Per-creator theme colors and custom slugs
+- **AI Studio:** Describe a content brief and generate a full day/week/month of AI-written captions
+  and AI-generated images, review and edit each draft, then auto-publish them to Instagram on schedule
+  via the polling worker
 - **Graceful Degradation:** Fallback thumbnails + links when embeds fail
 - **Token Encryption:** OAuth tokens encrypted at rest with AES-256-GCM
 - **Token Refresh:** Worker auto-refreshes expiring long-lived tokens

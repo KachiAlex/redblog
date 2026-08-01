@@ -8,12 +8,14 @@ import {
   FileText,
   BarChart3,
   Settings,
+  Sparkles,
 } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/theme", label: "Theme", icon: Palette },
   { href: "/dashboard/posts", label: "Posts", icon: FileText },
+  { href: "/dashboard/campaigns", label: "AI Studio", icon: Sparkles },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

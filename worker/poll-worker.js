@@ -4,11 +4,17 @@ const {
   getMedia,
   getOEmbed,
   refreshLongLivedToken,
+  createMediaContainer,
+  getContainerStatus,
+  publishMediaContainer,
 } = require("../lib/instagram");
 const { downloadVideo } = require("../lib/scraper");
+const { toAbsoluteUrl } = require("../lib/images");
 
 const prisma = new PrismaClient();
 const POLL_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+const PUBLISH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const APP_BASE_URL = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 async function syncCreatorPosts(creator) {
   if (creator.scannedFrom === "scan" || creator.accessToken === "scanned_no_token") {
@@ -131,15 +137,87 @@ async function pollAllCreators() {
   console.log(`[worker] Polling cycle complete`);
 }
 
+async function publishScheduledPost(post) {
+  const creator = post.creator;
+  try {
+    if (!post.imageFilePath) {
+      throw new Error("No generated image available for this post");
+    }
+
+    await prisma.scheduledPost.update({
+      where: { id: post.id },
+      data: { status: "publishing", error: null },
+    });
+
+    const token = decrypt(creator.accessToken);
+    const imageUrl = toAbsoluteUrl(post.imageFilePath, APP_BASE_URL);
+
+    const container = await createMediaContainer(
+      creator.igUserId,
+      token,
+      imageUrl,
+      post.caption
+    );
+
+    // Poll the container until Instagram has finished ingesting the image.
+    let statusCode = "IN_PROGRESS";
+    for (let attempt = 0; attempt < 10 && statusCode === "IN_PROGRESS"; attempt++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      const statusRes = await getContainerStatus(container.id, token);
+      statusCode = statusRes.status_code;
+    }
+
+    if (statusCode !== "FINISHED") {
+      throw new Error(`Media container did not finish processing (status: ${statusCode})`);
+    }
+
+    const published = await publishMediaContainer(creator.igUserId, token, container.id);
+
+    await prisma.scheduledPost.update({
+      where: { id: post.id },
+      data: {
+        status: "published",
+        igMediaId: published.id,
+        publishedAt: new Date(),
+      },
+    });
+
+    console.log(`[worker] Published scheduled post ${post.id} for @${creator.igUsername}`);
+  } catch (err) {
+    console.error(`[worker] Failed to publish scheduled post ${post.id}:`, err.message);
+    await prisma.scheduledPost.update({
+      where: { id: post.id },
+      data: { status: "failed", error: err.message },
+    });
+  }
+}
+
+async function publishDuePosts() {
+  const duePosts = await prisma.scheduledPost.findMany({
+    where: { status: "scheduled", scheduledFor: { lte: new Date() } },
+    include: { creator: true },
+  });
+
+  if (duePosts.length === 0) return;
+
+  console.log(`[worker] Found ${duePosts.length} scheduled post(s) due for publishing`);
+  for (const post of duePosts) {
+    await publishScheduledPost(post);
+  }
+}
+
 async function main() {
   console.log("[worker] ReelBlog polling worker started");
   console.log(`[worker] Poll interval: ${POLL_INTERVAL_MS / 1000}s`);
+  console.log(`[worker] Publish interval: ${PUBLISH_INTERVAL_MS / 1000}s`);
 
   // Run immediately on startup
   await pollAllCreators();
+  await publishDuePosts();
 
   // Then poll on interval
   setInterval(pollAllCreators, POLL_INTERVAL_MS);
+  setInterval(publishDuePosts, PUBLISH_INTERVAL_MS);
 }
 
 main().catch(console.error);

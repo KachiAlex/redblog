@@ -23,6 +23,8 @@ model Creator {
   posts       Post[]
   blogPage    BlogPage?
   analytics   Analytics[]
+  campaigns      Campaign[]
+  scheduledPosts ScheduledPost[]
 }
 
 model Post {
@@ -62,6 +64,47 @@ model BlogPage {
   bio           String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  creatorId   String
+  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  context     String
+  cadence     String   // daily | weekly | monthly
+  tone        String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("draft") // draft | scheduled | completed | canceled
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts ScheduledPost[]
+
+  @@index([creatorId])
+}
+
+model ScheduledPost {
+  id            String    @id @default(cuid())
+  creatorId     String
+  creator       Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  campaignId    String?
+  campaign      Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  caption       String
+  imagePrompt   String?
+  imageFilePath String?
+  scheduledFor  DateTime
+  status        String    @default("draft") // draft | scheduled | publishing | published | failed
+  igMediaId     String?
+  publishedAt   DateTime?
+  error         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([creatorId])
+  @@index([campaignId])
+  @@index([scheduledFor])
+  @@index([status])
 }
 
 model Analytics {
