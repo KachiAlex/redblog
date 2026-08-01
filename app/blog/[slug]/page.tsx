@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatDate, relativeTime, truncate } from "@/lib/utils";
 import { Play, ExternalLink, ArrowLeft, Video } from "lucide-react";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,16 @@ export default async function BlogPage({
 
   const { creator, creator: { posts } } = blogPage;
 
+  const gridStyle: React.CSSProperties =
+    blogPage.themeLayout === "list"
+      ? { display: "flex", flexDirection: "column", gap: "24px", maxWidth: "640px", margin: "0 auto" }
+      : blogPage.themeLayout === "masonry"
+      ? { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", gridAutoFlow: "dense" }
+      : { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" };
+
   return (
     <div>
+      <AnalyticsTracker slug={blogPage.slug} />
       {/* Blog Header */}
       <header style={{ borderBottom: "1px solid var(--line)", padding: "48px 0 40px" }}>
         <div className="wrap">
@@ -124,7 +133,7 @@ export default async function BlogPage({
               </p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }} id="posts-grid">
+            <div style={gridStyle} id="posts-grid">
               {posts.map((post) => (
                 <article key={post.id} className="card-dark" style={{ overflow: "hidden", padding: 0 }}>
                   {/* Thumbnail / Video preview */}

@@ -51,8 +51,8 @@ export default async function PostsPage() {
                 {[
                   { label: "Total", value: creator.posts.length },
                   { label: "Videos", value: creator.posts.filter((p) => p.mediaType === "VIDEO").length },
+                  { label: "Images", value: creator.posts.filter((p) => p.mediaType === "IMAGE").length },
                   { label: "Carousels", value: creator.posts.filter((p) => p.mediaType === "CAROUSEL_ALBUM").length },
-                  { label: "Embeds", value: creator.posts.filter((p) => p.embedHtml).length },
                 ].map((stat) => (
                   <div key={stat.label} className="card-dark" style={{ padding: "16px 20px" }}>
                     <p className="font-serif-display" style={{ fontSize: "28px" }}>{stat.value}</p>

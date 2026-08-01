@@ -97,6 +97,7 @@ model ScheduledPost {
   imageFilePath String?
   scheduledFor  DateTime
   status        String    @default("draft") // draft | scheduled | publishing | published | failed
+  containerId   String?   // Instagram media container id while processing
   igMediaId     String?
   publishedAt   DateTime?
   error         String?

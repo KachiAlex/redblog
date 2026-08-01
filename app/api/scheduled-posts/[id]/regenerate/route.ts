@@ -44,7 +44,7 @@ export async function POST(
       try {
         const imageBuffer = await generateImage(imagePrompt, post.campaign?.imageProvider);
         if (imageBuffer) {
-          const saved = saveGeneratedImage(imageBuffer, `${post.id}-${Date.now()}`);
+          const saved = await saveGeneratedImage(imageBuffer, `${post.id}-${Date.now()}`);
           imageFilePath = saved.filePath;
         }
       } catch (imgErr) {

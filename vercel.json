@@ -1,12 +1,18 @@
 {
   "functions": {
-    "app/api/scan/route.ts": {
-      "maxDuration": 60,
-      "memory": 2048
-    },
     "app/api/videos/[filename]/route.ts": {
       "maxDuration": 30,
       "memory": 1024
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sync-creators",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/publish-scheduled",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

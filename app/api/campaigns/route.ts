@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       try {
         const imageBuffer = await generateImage(item.imagePrompt, imageProvider);
         if (imageBuffer) {
-          const saved = saveGeneratedImage(imageBuffer, `${campaign.id}-${posts.length}`);
+          const saved = await saveGeneratedImage(imageBuffer, `${campaign.id}-${posts.length}`);
           imageFilePath = saved.filePath;
         }
       } catch (imgErr) {

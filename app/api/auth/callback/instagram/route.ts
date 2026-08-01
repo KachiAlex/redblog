@@ -3,6 +3,7 @@ import { exchangeCodeForToken, getLongLivedToken, getInstagramProfile, getMedia 
 import { encrypt } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { uploadVideoToBlob } from "@/lib/video-storage";
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = getUrlParts(req);
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
     const profile = await getInstagramProfile(longToken);
     igUserId = profile.id;
     igUsername = profile.username;
+    const igProfilePic = profile.profile_picture_url || null;
     console.log(`[oauth callback] Profile: @${igUsername} (ID: ${igUserId})`);
 
     const encryptedToken = encrypt(longToken);
@@ -43,6 +45,7 @@ export async function GET(req: NextRequest) {
       where: { igUserId },
       update: {
         igUsername,
+        igProfilePic,
         accessToken: encryptedToken,
         tokenExpiry,
         scannedFrom: "oauth",
@@ -50,6 +53,7 @@ export async function GET(req: NextRequest) {
       create: {
         igUserId: igUserId!,
         igUsername: igUsername!,
+        igProfilePic,
         accessToken: encryptedToken,
         tokenExpiry,
         scannedFrom: "oauth",
@@ -75,6 +79,19 @@ export async function GET(req: NextRequest) {
     let savedCount = 0;
     for (const item of mediaItems) {
       try {
+        let videoFilePath: string | null = null;
+
+        if (item.media_type === "VIDEO" && item.media_url) {
+          try {
+            const blobUrl = await uploadVideoToBlob(item.media_url, item.id);
+            if (blobUrl) {
+              videoFilePath = blobUrl;
+            }
+          } catch (e) {
+            console.error(`[oauth callback] Video upload failed for ${item.id}:`, e);
+          }
+        }
+
         await prisma.post.upsert({
           where: { igPostId: item.id },
           update: {
@@ -82,6 +99,8 @@ export async function GET(req: NextRequest) {
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
             videoUrl: item.media_url || null,
+            videoFilePath,
+            mediaType: item.media_type,
             publishedAt: new Date(item.timestamp),
           },
           create: {
@@ -91,6 +110,7 @@ export async function GET(req: NextRequest) {
             caption: item.caption || null,
             thumbnailUrl: item.thumbnail_url || null,
             videoUrl: item.media_url || null,
+            videoFilePath,
             mediaType: item.media_type,
             source: "oauth",
             publishedAt: new Date(item.timestamp),

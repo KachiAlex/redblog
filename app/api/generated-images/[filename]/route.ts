@@ -4,6 +4,14 @@ import path from "path";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Serves locally-generated images from /public/generated.
+ *
+ * In production (Vercel), generated images are uploaded to Vercel Blob and
+ * the stored ScheduledPost.imageFilePath is an absolute Blob URL, so this
+ * route is never hit. It exists for local development where images are
+ * written to the filesystem by saveGeneratedImage().
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: { filename: string } }
@@ -14,27 +22,22 @@ export async function GET(
     return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
   }
 
-  const possiblePaths = [
-    path.join("/tmp", "generated", fileName),
-    path.join(process.cwd(), "public", "generated", fileName),
-  ];
+  const filePath = path.join(process.cwd(), "public", "generated", fileName);
 
-  for (const filePath of possiblePaths) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const imageBuffer = fs.readFileSync(filePath);
-        return new NextResponse(imageBuffer, {
-          status: 200,
-          headers: {
-            "Content-Length": imageBuffer.length.toString(),
-            "Content-Type": "image/png",
-            "Cache-Control": "public, max-age=31536000, immutable",
-          },
-        });
-      }
-    } catch {
-      continue;
+  try {
+    if (fs.existsSync(filePath)) {
+      const imageBuffer = fs.readFileSync(filePath);
+      return new NextResponse(imageBuffer, {
+        status: 200,
+        headers: {
+          "Content-Length": imageBuffer.length.toString(),
+          "Content-Type": "image/png",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
     }
+  } catch {
+    // fall through to 404
   }
 
   return NextResponse.json({ error: "Image not found" }, { status: 404 });

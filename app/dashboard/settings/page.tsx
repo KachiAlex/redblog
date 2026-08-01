@@ -37,9 +37,9 @@ export default async function SettingsPage() {
               <p style={{ color: "var(--gray)", fontSize: "14px", marginBottom: "24px" }}>
                 Connect your Instagram to manage settings.
               </p>
-              <a href="/api/auth/login" className="btn btn-primary">
+              <Link href="/scan" className="btn btn-primary">
                 Connect Instagram →
-              </a>
+              </Link>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -56,7 +56,7 @@ export default async function SettingsPage() {
                   } />
                   <Row label="Instagram User ID" value={creator.igUserId} mono />
                   <Row label="Connected Since" value={formatDate(creator.connectedAt)} />
-                  <Row label="Blog URL" value={`${process.env.NEXTAUTH_URL || "https://redblog-psi.vercel.app"}/${creator.blogPage?.slug || "..."}`} action={
+                  <Row label="Blog URL" value={`${process.env.NEXT_PUBLIC_APP_URL || "https://redblog-psi.vercel.app"}/blog/${creator.blogPage?.slug || "..."}`} action={
                     creator.blogPage ? (
                       <Link href={`/blog/${creator.blogPage.slug}`} className="btn btn-ghost" style={{ fontSize: "11px", padding: "6px 12px" }}>
                         <ExternalLink style={{ width: "12px", height: "12px" }} /> Open

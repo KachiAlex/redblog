@@ -64,7 +64,7 @@ export async function refreshLongLivedToken(token: string) {
 
 export async function getInstagramProfile(token: string) {
   const res = await fetch(
-    `${INSTAGRAM_GRAPH_BASE}/me?fields=id,username,account_type,media_count&access_token=${token}`
+    `${INSTAGRAM_GRAPH_BASE}/me?fields=id,username,account_type,media_count,profile_picture_url&access_token=${token}`
   );
   if (!res.ok) throw new Error("Failed to fetch profile");
   return res.json();

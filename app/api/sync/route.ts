@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/crypto";
 import { getMedia, getOEmbed } from "@/lib/instagram";
-import { downloadVideo } from "@/lib/scraper";
+import { uploadVideoToBlob } from "@/lib/video-storage";
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,59 +32,69 @@ export async function POST(req: NextRequest) {
     const mediaItems = mediaRes.data || [];
 
     let newCount = 0;
+    let updatedCount = 0;
+
     for (const item of mediaItems) {
-      if (item.media_type === "VIDEO" || item.media_type === "CAROUSEL_ALBUM") {
-        const existing = await prisma.post.findUnique({
-          where: { igPostId: item.id },
-        });
+      const existing = await prisma.post.findUnique({
+        where: { igPostId: item.id },
+      });
 
-        if (!existing) {
-          let embedHtml = null;
-          let embedTitle = null;
-          let videoFilePath: string | null = null;
+      let embedHtml: string | null = existing?.embedHtml ?? null;
+      let embedTitle: string | null = existing?.embedTitle ?? null;
 
-          try {
-            const oembed = await getOEmbed(item.permalink, token);
-            embedHtml = oembed.html || null;
-            embedTitle = oembed.title || null;
-          } catch {
-          }
-
-          if (item.media_url && item.media_type === "VIDEO") {
-            try {
-              const downloaded = await downloadVideo(item.media_url, item.id);
-              if (downloaded) {
-                videoFilePath = process.env.VERCEL
-                  ? `/api/videos/${item.id}.mp4`
-                  : downloaded.filePath;
-              }
-            } catch {
-              // Video download may fail — continue with just the URL
-            }
-          }
-
-          await prisma.post.create({
-            data: {
-              creatorId: creator.id,
-              igPostId: item.id,
-              permalink: item.permalink,
-              embedHtml,
-              embedTitle,
-              caption: item.caption || null,
-              thumbnailUrl: item.thumbnail_url || null,
-              videoUrl: item.media_url || null,
-              videoFilePath,
-              mediaType: item.media_type,
-              source: "oauth",
-              publishedAt: new Date(item.timestamp),
-            },
-          });
-          newCount++;
+      if (!existing) {
+        try {
+          const oembed = await getOEmbed(item.permalink, token);
+          embedHtml = oembed.html || null;
+          embedTitle = oembed.title || null;
+        } catch {
         }
+      }
+
+      let videoFilePath: string | null = existing?.videoFilePath ?? null;
+
+      if (item.media_type === "VIDEO" && item.media_url) {
+        try {
+          const blobUrl = await uploadVideoToBlob(item.media_url, item.id);
+          if (blobUrl) {
+            videoFilePath = blobUrl;
+          }
+        } catch {
+        }
+      }
+
+      const postData = {
+        permalink: item.permalink,
+        embedHtml,
+        embedTitle,
+        caption: item.caption || null,
+        thumbnailUrl: item.thumbnail_url || null,
+        videoUrl: item.media_url || null,
+        videoFilePath,
+        mediaType: item.media_type,
+        publishedAt: new Date(item.timestamp),
+      };
+
+      if (!existing) {
+        await prisma.post.create({
+          data: {
+            creatorId: creator.id,
+            igPostId: item.id,
+            source: "oauth",
+            ...postData,
+          },
+        });
+        newCount++;
+      } else {
+        await prisma.post.update({
+          where: { igPostId: item.id },
+          data: postData,
+        });
+        updatedCount++;
       }
     }
 
-    return NextResponse.json({ success: true, newPosts: newCount });
+    return NextResponse.json({ success: true, newPosts: newCount, updatedPosts: updatedCount });
   } catch (err) {
     console.error("Sync error:", err);
     return NextResponse.json({ error: "Sync failed" }, { status: 500 });
