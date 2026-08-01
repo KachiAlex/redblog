@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Eye, Save } from "lucide-react";
+import { Check, Eye, Save, Play, Video, Images } from "lucide-react";
 import Link from "next/link";
 
 type BlogSettings = {
@@ -13,11 +13,24 @@ type BlogSettings = {
   bio: string | null;
 };
 
+type PreviewPost = {
+  id: string;
+  caption: string | null;
+  thumbnailUrl: string | null;
+  videoUrl: string | null;
+  mediaType: string;
+  permalink: string;
+};
+
 export function ThemeCustomizer({
   creatorId,
+  igUsername,
+  posts,
   initialSettings,
 }: {
   creatorId: string;
+  igUsername: string;
+  posts: PreviewPost[];
   initialSettings: BlogSettings;
 }) {
   const [settings, setSettings] = useState<BlogSettings>(initialSettings);
@@ -245,12 +258,17 @@ export function ThemeCustomizer({
 
       {/* Live Preview */}
       <div className="card-dark" style={{ overflow: "hidden" }}>
-        <div style={{ borderBottom: "1px solid var(--line)", padding: "16px 24px" }}>
+        <div style={{ borderBottom: "1px solid var(--line)", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <h2 className="font-serif-display" style={{ fontSize: "20px" }}>Live Preview</h2>
+          <Link href={`/blog/${settings.slug}`} className="btn btn-ghost" style={{ fontSize: "12px", padding: "6px 12px" }}>
+            <Eye style={{ width: "12px", height: "12px" }} />
+            Open full page
+          </Link>
         </div>
         <div style={{ padding: "24px" }}>
-          <div style={{ borderRadius: "8px", padding: "24px", background: `linear-gradient(135deg, ${settings.themePrimary}15, ${settings.themeAccent}15)` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ borderRadius: "8px", overflow: "hidden", border: "1px solid var(--line)", background: "var(--bg)" }}>
+            {/* Simulated blog header */}
+            <div style={{ padding: "24px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: "16px" }}>
               <div
                 style={{
                   width: "56px",
@@ -264,23 +282,92 @@ export function ThemeCustomizer({
                   color: "var(--paper)",
                   fontFamily: "var(--font-serif)",
                   background: `linear-gradient(135deg, ${settings.themePrimary}, ${settings.themeAccent})`,
+                  flexShrink: 0,
                 }}
               >
-                A
+                {igUsername.charAt(0).toUpperCase()}
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <h3 className="font-serif-display" style={{ fontSize: "20px", fontStyle: "italic" }}>
-                  {settings.title || "@yourhandle"}
+                  {settings.title || `@${igUsername}`}
                 </h3>
-                <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
-                  {settings.bio || "Your bio will appear here."}
-                </span>
+                {settings.bio ? (
+                  <p style={{ fontSize: "13px", color: "var(--gray)", marginTop: "4px", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>
+                    {settings.bio}
+                  </p>
+                ) : (
+                  <span className="font-mono-label" style={{ fontSize: "12px", color: "var(--gray)" }}>
+                    {posts.length} POSTS
+                  </span>
+                )}
               </div>
             </div>
-            <div style={{ marginTop: "24px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {[1, 2, 3].map((i) => (
-                <div key={i} style={{ aspectRatio: "9/16", borderRadius: "6px", background: `linear-gradient(135deg, ${settings.themePrimary}30, ${settings.themeAccent}30)` }} />
-              ))}
+
+            {/* Simulated posts grid */}
+            <div style={{ padding: "16px" }}>
+              {posts.length === 0 ? (
+                <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--gray)", fontSize: "13px" }}>
+                  No posts synced yet. Connect your Instagram to populate your blog.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+                  {posts.slice(0, 6).map((post) => (
+                    <div key={post.id} style={{ position: "relative", aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", background: "var(--bg-raised)" }}>
+                      {post.thumbnailUrl || post.videoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={post.thumbnailUrl || post.videoUrl || undefined}
+                          alt={post.caption || "Post"}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                          <Play style={{ width: "20px", height: "20px", color: "var(--gray)" }} />
+                        </div>
+                      )}
+                      {/* Type badge */}
+                      <div style={{
+                        position: "absolute",
+                        top: "6px",
+                        right: "6px",
+                        background: "rgba(0,0,0,0.7)",
+                        borderRadius: "3px",
+                        padding: "3px 6px",
+                        display: "flex",
+                        alignItems: "center",
+                      }}>
+                        {post.mediaType === "VIDEO" ? (
+                          <Video style={{ width: "10px", height: "10px", color: "var(--paper)" }} />
+                        ) : (
+                          <Images style={{ width: "10px", height: "10px", color: "var(--paper)" }} />
+                        )}
+                      </div>
+                      {/* Play overlay for videos */}
+                      {post.mediaType === "VIDEO" && (
+                        <div style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}>
+                          <div style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            background: "rgba(232,64,44,0.85)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}>
+                            <Play style={{ width: "14px", height: "14px", color: "white", fill: "white" }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

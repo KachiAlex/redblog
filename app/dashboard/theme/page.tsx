@@ -6,7 +6,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ThemePage() {
   const creator = await prisma.creator.findFirst({
-    include: { blogPage: true },
+    include: {
+      blogPage: true,
+      posts: {
+        orderBy: { publishedAt: "desc" },
+        take: 6,
+      },
+    },
     orderBy: { connectedAt: "desc" },
   });
 
@@ -38,6 +44,15 @@ export default async function ThemePage() {
         <div className="wrap" style={{ padding: "32px 0" }}>
           <ThemeCustomizer
             creatorId={creator.id}
+            igUsername={creator.igUsername}
+            posts={creator.posts.map((p) => ({
+              id: p.id,
+              caption: p.caption,
+              thumbnailUrl: p.thumbnailUrl,
+              videoUrl: p.videoUrl,
+              mediaType: p.mediaType,
+              permalink: p.permalink,
+            }))}
             initialSettings={{
               slug: creator.blogPage.slug,
               themePrimary: creator.blogPage.themePrimary,
