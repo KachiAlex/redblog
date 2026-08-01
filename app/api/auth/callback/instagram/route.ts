@@ -103,15 +103,14 @@ export async function GET(req: NextRequest) {
     }
     console.log(`[oauth callback] Saved ${savedCount}/${mediaItems.length} posts`);
 
-    const res = NextResponse.redirect(new URL(`/dashboard?connected=1`, origin));
+    const res = NextResponse.redirect(new URL(`/auth/close?success=1`, origin));
     res.cookies.delete("oauth_state");
     return res;
   } catch (err) {
     console.error("[oauth callback] Error:", err);
     const msg = err instanceof Error ? err.message : String(err);
-    const redirectUrl = new URL("/?error=callback_failed", origin);
+    const redirectUrl = new URL("/auth/close?error=callback_failed", origin);
     redirectUrl.searchParams.set("detail", msg.slice(0, 200));
-    if (igUsername) redirectUrl.searchParams.set("username", igUsername);
     return NextResponse.redirect(redirectUrl);
   }
 }

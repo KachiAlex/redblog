@@ -1,28 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Search, Instagram } from "lucide-react";
+import { Search, Instagram, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function ScanPage() {
   const [username, setUsername] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; error?: string; detail?: string } | null>(null);
+
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type !== "oauth_callback") return;
+
+      setConnecting(false);
+      if (e.data.success) {
+        setResult({ success: true });
+        setTimeout(() => {
+          window.location.href = "/dashboard?connected=1";
+        }, 1200);
+      } else {
+        setResult({ success: false, error: e.data.error, detail: e.data.detail });
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   function handleConnect(e: React.FormEvent) {
     e.preventDefault();
     if (!username.trim()) return;
     sessionStorage.setItem("pending_scan_username", username.trim());
-    setSubmitted(true);
-    window.location.href = "/api/auth/login";
+    setConnecting(true);
+    setResult(null);
+
+    const width = 550;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      "/api/auth/login",
+      "instagram_oauth",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`
+    );
+
+    if (!popup) {
+      setConnecting(false);
+      setResult({ success: false, error: "popup_blocked", detail: "Please allow popups for this site to connect your Instagram." });
+    }
   }
 
   return (
     <div>
       <Navbar />
 
-      {/* Hero / Input */}
       <header style={{ padding: "80px 0 48px", borderBottom: "1px solid var(--line)" }}>
         <div className="wrap" style={{ maxWidth: "640px", textAlign: "center", margin: "0 auto" }}>
           <span className="eyebrow">Connect your Instagram</span>
@@ -53,7 +88,7 @@ export default function ScanPage() {
             searchable blog — fully compliant, no scraping.
           </p>
 
-          {!submitted ? (
+          {!connecting && !result && (
             <form onSubmit={handleConnect} className="scan-form" style={{ display: "flex", gap: "12px", alignItems: "stretch" }}>
               <div style={{ flex: 1, display: "flex", alignItems: "center", background: "var(--bg-raised)", border: "1px solid var(--line)", borderRadius: "4px", padding: "0 16px" }}>
                 <span className="font-mono-label" style={{ fontSize: "15px", color: "var(--gray)" }}>@</span>
@@ -85,30 +120,80 @@ export default function ScanPage() {
                 Connect &amp; Scan →
               </button>
             </form>
-          ) : (
+          )}
+
+          {connecting && (
             <div
               style={{
                 marginTop: "24px",
-                padding: "24px",
+                padding: "32px",
                 border: "1px solid var(--line)",
                 borderRadius: "6px",
                 background: "var(--bg-raised)",
-                textAlign: "left",
+                textAlign: "center",
               }}
               className="card-dark"
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                <Search style={{ width: "20px", height: "20px", color: "var(--red-bright)" }} />
-                <span className="font-mono-label" style={{ fontSize: "13px", color: "var(--red-bright)" }}>REDIRECTING TO INSTAGRAM</span>
-              </div>
-              <p style={{ fontSize: "14px", color: "var(--paper)", lineHeight: 1.5 }}>
-                You&apos;re being redirected to Instagram to authorize RedBlog.
-                After you approve, we&apos;ll automatically fetch your Reels and
-                create your blog.
+              <Loader2 style={{ width: "32px", height: "32px", color: "var(--red-bright)", margin: "0 auto 16px", animation: "spin 1s linear infinite" }} />
+              <p className="font-mono-label" style={{ fontSize: "13px", color: "var(--red-bright)", marginBottom: "8px" }}>
+                CONNECTING TO INSTAGRAM
               </p>
-              <p style={{ fontSize: "12px", color: "var(--gray)", marginTop: "12px" }}>
-                If nothing happens, <a href="/api/auth/login" style={{ color: "var(--red-bright)", textDecoration: "underline" }}>click here</a>.
+              <p style={{ fontSize: "14px", color: "var(--gray)", lineHeight: 1.5 }}>
+                A popup window opened for you to authorize RedBlog.
+                <br />
+                Complete the authorization there — this page will update automatically.
               </p>
+            </div>
+          )}
+
+          {result?.success && (
+            <div
+              style={{
+                marginTop: "24px",
+                padding: "32px",
+                border: "1px solid rgba(232,64,44,0.3)",
+                borderRadius: "6px",
+                background: "rgba(232,64,44,0.08)",
+                textAlign: "center",
+              }}
+            >
+              <CheckCircle2 style={{ width: "32px", height: "32px", color: "var(--red-bright)", margin: "0 auto 16px" }} />
+              <p className="font-mono-label" style={{ fontSize: "13px", color: "var(--red-bright)", marginBottom: "8px" }}>
+                CONNECTED SUCCESSFULLY
+              </p>
+              <p style={{ fontSize: "14px", color: "var(--gray)" }}>
+                Redirecting to your dashboard...
+              </p>
+            </div>
+          )}
+
+          {result && !result.success && (
+            <div
+              style={{
+                marginTop: "24px",
+                padding: "32px",
+                border: "1px solid var(--line)",
+                borderRadius: "6px",
+                background: "var(--bg-raised)",
+                textAlign: "center",
+              }}
+              className="card-dark"
+            >
+              <AlertCircle style={{ width: "28px", height: "28px", color: "var(--red-bright)", margin: "0 auto 12px" }} />
+              <p className="font-mono-label" style={{ fontSize: "13px", color: "var(--red-bright)", marginBottom: "8px" }}>
+                CONNECTION FAILED
+              </p>
+              <p style={{ fontSize: "13px", color: "var(--gray)", marginBottom: "16px" }}>
+                {result.detail || result.error || "Something went wrong. Please try again."}
+              </p>
+              <button
+                onClick={() => { setResult(null); setConnecting(false); }}
+                className="btn btn-ghost"
+                style={{ fontSize: "13px" }}
+              >
+                <X style={{ width: "14px", height: "14px" }} />
+                Try again
+              </button>
             </div>
           )}
 
@@ -127,7 +212,7 @@ export default function ScanPage() {
               <br />
               1. Enter your Instagram handle above
               <br />
-              2. Click Connect — you&apos;ll be redirected to Instagram&apos;s official OAuth page
+              2. Click Connect — a popup opens with Instagram&apos;s official OAuth page
               <br />
               3. Authorize RedBlog to access your media
               <br />
@@ -160,7 +245,6 @@ export default function ScanPage() {
         </div>
       </header>
 
-      {/* Already connected? */}
       <section style={{ padding: "60px 0" }}>
         <div className="wrap" style={{ maxWidth: "640px", textAlign: "center" }}>
           <span className="eyebrow">Already connected?</span>
@@ -181,6 +265,7 @@ export default function ScanPage() {
       <Footer />
 
       <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @media (max-width: 600px) {
           .scan-form { flex-direction: column !important; }
           .scan-form button { width: 100%; justify-content: center; }
