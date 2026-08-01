@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 export default function HomePage() {
   return (
     <div>
       <Navbar />
+      <ScrollReveal />
 
       {/* HERO */}
       <header style={{ padding: "100px 0 60px", position: "relative" }}>
@@ -75,10 +77,10 @@ export default function HomePage() {
           </div>
 
           {/* Filmstrip */}
-          <div style={{ position: "relative", height: "460px" }} className="filmstrip" aria-hidden="true">
-            <FilmFrame className="f1 anim-drift1" label="IG_0511" tag="REEL" z={1} />
-            <FilmFrame className="f3 anim-drift3" label="IG_0512" tag="REEL" z={1} />
-            <FilmFrame className="f2 anim-drift2" label="POST_047" tag="LIVE" z={2} published />
+          <div style={{ position: "relative", height: "460px" }} className="filmstrip reveal" aria-hidden="true">
+            <FilmFrame className="f1 anim-drift1" label="IG_0511" tag="REEL" z={1} img="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=300&h=533&fit=crop" />
+            <FilmFrame className="f3 anim-drift3" label="IG_0512" tag="REEL" z={1} img="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=300&h=533&fit=crop" />
+            <FilmFrame className="f2 anim-drift2" label="POST_047" tag="LIVE" z={2} published img="https://images.unsplash.com/photo-1492691527719-9d1eab7b9317?w=300&h=533&fit=crop" />
           </div>
         </div>
       </header>
@@ -86,7 +88,7 @@ export default function HomePage() {
       <hr className="rule" />
 
       {/* PROCESS */}
-      <section id="process" style={{ padding: "110px 0" }}>
+      <section id="process" style={{ padding: "110px 0" }} className="reveal">
         <div className="wrap">
           <div style={{ maxWidth: "560px", marginBottom: "64px" }}>
             <span className="eyebrow">The process — three passes</span>
@@ -129,7 +131,7 @@ export default function HomePage() {
       </section>
 
       {/* LIVE EXAMPLE */}
-      <section id="example" style={{ padding: "0 0 110px" }}>
+      <section id="example" style={{ padding: "0 0 110px" }} className="reveal">
         <div className="wrap">
           <div
             className="card-paper"
@@ -168,17 +170,17 @@ export default function HomePage() {
                 View the full archive →
               </Link>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-              <ExamplePost title="Sunday service clip" date="JUL 27" gradient="linear-gradient(160deg,#3a3630,#17151a)" />
-              <ExamplePost title="Studio setup walk-through" date="JUL 22" gradient="linear-gradient(160deg,#5c2420,#17151a)" />
-              <ExamplePost title="Behind the broadcast" date="JUL 18" gradient="linear-gradient(160deg,#2a3630,#17151a)" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }} className="example-posts-grid">
+              <ExamplePost title="Sunday service clip" date="JUL 27" img="https://images.unsplash.com/photo-1604516524119-4b9c75d7e4f4?w=300&h=533&fit=crop" />
+              <ExamplePost title="Studio setup walk-through" date="JUL 22" img="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=300&h=533&fit=crop" />
+              <ExamplePost title="Behind the broadcast" date="JUL 18" img="https://images.unsplash.com/photo-1492691527719-9d1eab7b9317?w=300&h=533&fit=crop" />
             </div>
           </div>
         </div>
       </section>
 
       {/* PRICING */}
-      <section id="pricing" style={{ padding: "0 0 120px" }}>
+      <section id="pricing" style={{ padding: "0 0 120px" }} className="reveal">
         <div className="wrap">
           <div style={{ maxWidth: "520px", marginBottom: "56px" }}>
             <span className="eyebrow">Pricing — pick a plan</span>
@@ -226,13 +228,73 @@ export default function HomePage() {
       {/* Responsive overrides */}
       <style>{`
         @media (max-width: 920px) {
-          #hero-grid { grid-template-columns: 1fr !important; }
+          #hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
           .filmstrip { height: 340px !important; margin-top: 20px; }
           .steps-grid { grid-template-columns: 1fr !important; }
-          #example-card { grid-template-columns: 1fr !important; }
+          #example-card { grid-template-columns: 1fr !important; padding: "32px 24px" }
           #plans-grid { grid-template-columns: 1fr !important; }
         }
+        @media (max-width: 640px) {
+          .filmstrip { height: 280px !important; transform: scale(0.75); transform-origin: center; }
+          .example-posts-grid { grid-template-columns: 1fr !important; max-width: 240px; margin: 0 auto; }
+          #example-card { padding: 28px 20px !important; gap: 24px !important; }
+        }
         :focus-visible { outline: 2px solid var(--red-bright); outline-offset: 2px; }
+
+        /* Scroll reveal */
+        .reveal {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.in-view {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Example post hover */
+        .example-post-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+        }
+        .example-post-card:hover img {
+          transform: scale(1.08);
+        }
+
+        /* Step card hover */
+        .steps-grid > div {
+          transition: background 0.3s ease;
+        }
+        .steps-grid > div:hover {
+          background: var(--bg-raised) !important;
+        }
+
+        /* Plan card hover */
+        #plans-grid > div {
+          transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        #plans-grid > div:hover {
+          transform: translateY(-4px);
+        }
+
+        /* Button shine */
+        .btn-primary {
+          position: relative;
+          overflow: hidden;
+        }
+        .btn-primary::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transition: left 0.5s ease;
+        }
+        .btn-primary:hover::after {
+          left: 100%;
+        }
       `}</style>
     </div>
   );
@@ -244,12 +306,14 @@ function FilmFrame({
   tag,
   z,
   published,
+  img,
 }: {
   className: string;
   label: string;
   tag: string;
   z: number;
   published?: boolean;
+  img?: string;
 }) {
   const positions: Record<string, React.CSSProperties> = {
     f1: { top: "8px", left: "0", transform: "rotate(-9deg)" },
@@ -305,13 +369,25 @@ function FilmFrame({
           width: "100%",
           height: "100%",
           borderRadius: "1px",
-          background: published
-            ? "linear-gradient(160deg,#5c2420,#17151a 65%)"
-            : "linear-gradient(160deg,#3a3630,#17151a 70%)",
           position: "relative",
           overflow: "hidden",
+          background: "var(--bg)",
         }}
       >
+        {img && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={img}
+            alt=""
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: 0.9,
+            }}
+            loading="lazy"
+          />
+        )}
         <div
           style={{
             position: "absolute",
@@ -323,8 +399,12 @@ function FilmFrame({
             borderBottom: "8px solid transparent",
             borderLeft: "13px solid rgba(246,241,231,0.85)",
             transform: "translate(-40%,-50%)",
+            zIndex: 2,
           }}
         />
+        {published && (
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(92,36,32,0.3), rgba(23,21,26,0.5))" }} />
+        )}
       </div>
       {/* Label */}
       <div
@@ -371,7 +451,7 @@ function Step({ num, title, desc }: { num: string; title: string; desc: string }
   );
 }
 
-function ExamplePost({ title, date, gradient }: { title: string; date: string; gradient: string }) {
+function ExamplePost({ title, date, img }: { title: string; date: string; img?: string }) {
   return (
     <div
       style={{
@@ -380,9 +460,20 @@ function ExamplePost({ title, date, gradient }: { title: string; date: string; g
         overflow: "hidden",
         aspectRatio: "9/16",
         position: "relative",
+        transition: "transform 0.3s ease, box-shadow 0.3s ease",
       }}
+      className="example-post-card"
     >
-      <div style={{ width: "100%", height: "72%", position: "relative", overflow: "hidden", background: gradient }}>
+      <div style={{ width: "100%", height: "72%", position: "relative", overflow: "hidden", background: "var(--bg-raised)" }}>
+        {img && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={img}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
+            loading="lazy"
+          />
+        )}
         <div
           style={{
             position: "absolute",
@@ -394,6 +485,7 @@ function ExamplePost({ title, date, gradient }: { title: string; date: string; g
             borderBottom: "6px solid transparent",
             borderLeft: "10px solid rgba(246,241,231,0.85)",
             transform: "translate(-35%,-50%)",
+            zIndex: 2,
           }}
         />
       </div>
