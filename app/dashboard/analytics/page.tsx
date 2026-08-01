@@ -44,7 +44,7 @@ export default async function AnalyticsPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <DashboardSidebar />
-      <div style={{ flex: 1, overflowX: "hidden" }}>
+      <div style={{ flex: 1, overflowX: "hidden" }} className="dash-content-wrap">
         <div className="wrap" style={{ padding: "32px 0" }}>
           <div style={{ marginBottom: "32px" }}>
             <span className="eyebrow">Performance metrics</span>
@@ -146,6 +146,10 @@ export default async function AnalyticsPage() {
       <style>{`
         @media (max-width: 768px) {
           #analytics-stats { grid-template-columns: repeat(2, 1fr) !important; }
+          .dash-content-wrap { padding-bottom: 80px !important; }
+        }
+        @media (max-width: 480px) {
+          #analytics-stats { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

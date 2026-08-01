@@ -181,4 +181,10 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  @media (max-width: 768px) {
+    .wrap {
+      padding: 0 20px;
+    }
+  }
 }

@@ -54,7 +54,7 @@ export default function ScanPage() {
           </p>
 
           {!submitted ? (
-            <form onSubmit={handleConnect} style={{ display: "flex", gap: "12px", alignItems: "stretch" }}>
+            <form onSubmit={handleConnect} className="scan-form" style={{ display: "flex", gap: "12px", alignItems: "stretch" }}>
               <div style={{ flex: 1, display: "flex", alignItems: "center", background: "var(--bg-raised)", border: "1px solid var(--line)", borderRadius: "4px", padding: "0 16px" }}>
                 <span className="font-mono-label" style={{ fontSize: "15px", color: "var(--gray)" }}>@</span>
                 <input
@@ -179,6 +179,13 @@ export default function ScanPage() {
       </section>
 
       <Footer />
+
+      <style>{`
+        @media (max-width: 600px) {
+          .scan-form { flex-direction: column !important; }
+          .scan-form button { width: 100%; justify-content: center; }
+        }
+      `}</style>
     </div>
   );
 }

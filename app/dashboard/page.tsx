@@ -29,7 +29,7 @@ export default async function DashboardPage({
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <DashboardSidebar />
-      <div style={{ flex: 1, overflowX: "hidden" }}>
+      <div style={{ flex: 1, overflowX: "hidden" }} className="dash-content-wrap">
         <div className="wrap" style={{ padding: "32px 0" }}>
           {connected && (
             <div

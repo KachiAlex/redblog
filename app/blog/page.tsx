@@ -135,7 +135,10 @@ export default async function BlogListPage() {
       <Footer />
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+          #blog-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 640px) {
           #blog-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>

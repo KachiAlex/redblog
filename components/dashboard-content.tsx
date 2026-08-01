@@ -243,7 +243,10 @@ export function DashboardContent({ creators }: { creators: CreatorData[] }) {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @media (max-width: 768px) {
           #stats-grid { grid-template-columns: 1fr !important; }
-          #dash-header { flex-direction: column !important; }
+          #dash-header { flex-direction: column !important; align-items: flex-start !important; }
+        }
+        @media (max-width: 768px) {
+          .dash-content-wrap { padding-bottom: 80px !important; }
         }
       `}</style>
     </>

@@ -20,7 +20,7 @@ export default async function PostsPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <DashboardSidebar />
-      <div style={{ flex: 1, overflowX: "hidden" }}>
+      <div style={{ flex: 1, overflowX: "hidden" }} className="dash-content-wrap">
         <div className="wrap" style={{ padding: "32px 0" }}>
           <div style={{ marginBottom: "32px" }}>
             <span className="eyebrow">All entries</span>
@@ -42,7 +42,7 @@ export default async function PostsPage() {
                 Connect your Instagram and sync to see your posts here.
               </p>
               <Link href="/scan" className="btn btn-primary">
-                Scan any Instagram →
+                Connect Instagram →
               </Link>
             </div>
           ) : (
@@ -157,6 +157,10 @@ export default async function PostsPage() {
       <style>{`
         @media (max-width: 768px) {
           #posts-stats { grid-template-columns: repeat(2, 1fr) !important; }
+          .dash-content-wrap { padding-bottom: 80px !important; }
+        }
+        @media (max-width: 480px) {
+          #posts-stats { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

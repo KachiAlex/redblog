@@ -211,9 +211,12 @@ export default async function BlogPage({
       </footer>
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+          #posts-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 640px) {
           #posts-grid { grid-template-columns: 1fr !important; }
-          #blog-header { flex-direction: column !important; align-items: flex-start !important; }
+          #blog-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
         }
       `}</style>
     </div>

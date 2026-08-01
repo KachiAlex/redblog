@@ -227,17 +227,23 @@ export default function HomePage() {
 
       {/* Responsive overrides */}
       <style>{`
-        @media (max-width: 920px) {
+        @media (max-width: 1024px) {
           #hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-          .filmstrip { height: 340px !important; margin-top: 20px; }
+          .filmstrip { height: 380px !important; margin-top: 20px; }
+          #example-card { grid-template-columns: 1fr !important; }
+          #plans-grid { grid-template-columns: 1fr !important; max-width: 400px; margin: 0 auto; }
+        }
+        @media (max-width: 768px) {
           .steps-grid { grid-template-columns: 1fr !important; }
-          #example-card { grid-template-columns: 1fr !important; padding: "32px 24px" }
-          #plans-grid { grid-template-columns: 1fr !important; }
+          .example-posts-grid { grid-template-columns: repeat(3, 1fr) !important; }
         }
         @media (max-width: 640px) {
           .filmstrip { height: 280px !important; transform: scale(0.75); transform-origin: center; }
           .example-posts-grid { grid-template-columns: 1fr !important; max-width: 240px; margin: 0 auto; }
           #example-card { padding: 28px 20px !important; gap: 24px !important; }
+        }
+        @media (max-width: 480px) {
+          .filmstrip { transform: scale(0.6); transform-origin: center; }
         }
         :focus-visible { outline: 2px solid var(--red-bright); outline-offset: 2px; }
 

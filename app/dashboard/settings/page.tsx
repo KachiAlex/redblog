@@ -16,7 +16,7 @@ export default async function SettingsPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <DashboardSidebar />
-      <div style={{ flex: 1, overflowX: "hidden" }}>
+      <div style={{ flex: 1, overflowX: "hidden" }} className="dash-content-wrap">
         <div className="wrap" style={{ padding: "32px 0" }}>
           <div style={{ marginBottom: "32px" }}>
             <span className="eyebrow">Account management</span>
@@ -99,21 +99,27 @@ export default async function SettingsPage() {
           )}
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .dash-content-wrap { padding-bottom: 80px !important; }
+          .settings-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+        }
+      `}</style>
     </div>
   );
 }
 
 function Row({ label, value, mono, action, badge }: { label: string; value: string; mono?: boolean; action?: React.ReactNode; badge?: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "16px", borderBottom: "1px solid var(--line)", gap: "12px" }}>
+    <div className="settings-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "16px", borderBottom: "1px solid var(--line)", gap: "12px" }}>
       <div style={{ minWidth: 0 }}>
         <p style={{ fontSize: "13px", fontWeight: 500 }}>{label}</p>
-        <p style={{ fontSize: "13px", color: "var(--gray)", marginTop: "2px", fontFamily: mono ? "var(--font-mono)" : "inherit" }}>
+        <p style={{ fontSize: "13px", color: "var(--gray)", marginTop: "2px", fontFamily: mono ? "var(--font-mono)" : "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {value}
         </p>
       </div>
       {badge && (
-        <span className="badge-dark" style={{ background: "rgba(232,64,44,0.15)", color: "var(--red-bright)" }}>
+        <span className="badge-dark" style={{ background: "rgba(232,64,44,0.15)", color: "var(--red-bright)", flexShrink: 0 }}>
           ● {badge}
         </span>
       )}

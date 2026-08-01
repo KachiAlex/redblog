@@ -34,7 +34,7 @@ export default async function ThemePage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <DashboardSidebar />
-      <div style={{ flex: 1, overflowX: "hidden" }}>
+      <div style={{ flex: 1, overflowX: "hidden" }} className="dash-content-wrap">
         <div className="wrap" style={{ padding: "32px 0" }}>
           <ThemeCustomizer
             creatorId={creator.id}
@@ -49,6 +49,11 @@ export default async function ThemePage() {
           />
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .dash-content-wrap { padding-bottom: 80px !important; }
+        }
+      `}</style>
     </div>
   );
 }
