@@ -1,5 +1,20 @@
 import { resolveTextConfig, resolveImageConfig } from "@/lib/ai-providers";
 
+/**
+ * Thrown for any AI-provider failure. `message` is safe to show directly to
+ * end users; the full technical detail (provider response body, stack, etc.)
+ * is logged server-side via `detail` so we can debug without exposing
+ * internals (API keys, provider error formats) to the UI.
+ */
+export class AiError extends Error {
+  detail?: string;
+  constructor(message: string, detail?: string) {
+    super(message);
+    this.name = "AiError";
+    this.detail = detail;
+  }
+}
+
 export type Cadence = "daily" | "weekly" | "monthly";
 
 export interface PlannedPost {
@@ -15,31 +30,42 @@ async function chatCompletion(
 ): Promise<string> {
   const { provider, baseUrl, model, apiKey } = resolveTextConfig(textProvider);
   if (!apiKey) {
-    throw new Error(`${provider.apiKeyEnv} is not configured for the ${provider.label} text provider`);
+    console.error(`[ai] Missing ${provider.apiKeyEnv} for text provider "${provider.id}"`);
+    throw new AiError(`${provider.label} isn't available right now. Please try a different caption model.`);
   }
 
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      response_format: { type: "json_object" },
-      messages,
-      temperature,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: "json_object" },
+        messages,
+        temperature,
+      }),
+    });
+  } catch (err) {
+    console.error(`[ai] Network error calling ${provider.label}:`, err);
+    throw new AiError(`Couldn't reach ${provider.label}. Please try again in a moment.`);
+  }
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`${provider.label} chat completion failed: ${err}`);
+    const detail = await res.text();
+    console.error(`[ai] ${provider.label} chat completion failed (${res.status}):`, detail);
+    throw new AiError(`${provider.label} couldn't generate a caption right now. Please try again or pick a different model.`, detail);
   }
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error(`${provider.label} returned an empty completion`);
+  if (!content) {
+    console.error(`[ai] ${provider.label} returned an empty completion:`, JSON.stringify(data));
+    throw new AiError(`${provider.label} returned an empty response. Please try again.`);
+  }
   return content;
 }
 
@@ -112,7 +138,8 @@ ${schedule.map((d) => d.toISOString()).join("\n")}`;
   try {
     parsed = JSON.parse(content);
   } catch {
-    throw new Error("The model returned malformed JSON for the campaign plan");
+    console.error("[ai] Malformed JSON campaign plan:", content);
+    throw new AiError("The AI returned an unexpected response while planning your campaign. Please try again.");
   }
 
   const posts = parsed.posts || [];
@@ -157,7 +184,14 @@ ${instructions ? `Extra instructions for this specific post: ${instructions}` : 
     1
   );
 
-  const parsed = JSON.parse(content);
+  let parsed: { caption?: string; imagePrompt?: string };
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    console.error("[ai] Malformed JSON caption regeneration:", content);
+    throw new AiError("The AI returned an unexpected response. Please try again.");
+  }
+
   return {
     caption: parsed.caption?.trim() || "",
     imagePrompt: parsed.imagePrompt?.trim() || context,
@@ -177,32 +211,43 @@ export async function generateImage(
   const { provider, baseUrl, model, apiKey } = resolveImageConfig(imageProvider);
   if (provider.id === "none") return null;
   if (!apiKey) {
-    throw new Error(`${provider.apiKeyEnv} is not configured for the ${provider.label} image provider`);
+    console.error(`[ai] Missing ${provider.apiKeyEnv} for image provider "${provider.id}"`);
+    throw new AiError(`${provider.label} isn't available right now. Please try a different image option, or choose "No image".`);
   }
 
-  const res = await fetch(`${baseUrl}/images/generations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      prompt,
-      n: 1,
-      size: "1024x1024",
-      response_format: provider.responseFormat,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/images/generations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: provider.responseFormat,
+      }),
+    });
+  } catch (err) {
+    console.error(`[ai] Network error calling ${provider.label}:`, err);
+    throw new AiError(`Couldn't reach ${provider.label}. Please try again in a moment.`);
+  }
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`${provider.label} image generation failed: ${err}`);
+    const detail = await res.text();
+    console.error(`[ai] ${provider.label} image generation failed (${res.status}):`, detail);
+    throw new AiError(`${provider.label} couldn't generate an image right now. Please try again or pick a different option.`, detail);
   }
 
   const data = await res.json();
   const item = data.data?.[0];
-  if (!item) throw new Error(`${provider.label} returned no image data`);
+  if (!item) {
+    console.error(`[ai] ${provider.label} returned no image data:`, JSON.stringify(data));
+    throw new AiError(`${provider.label} didn't return an image. Please try again.`);
+  }
 
   if (item.b64_json) {
     return Buffer.from(item.b64_json, "base64");
@@ -210,9 +255,13 @@ export async function generateImage(
 
   if (item.url) {
     const imgRes = await fetch(item.url);
-    if (!imgRes.ok) throw new Error(`Failed to download generated image from ${provider.label}`);
+    if (!imgRes.ok) {
+      console.error(`[ai] Failed to download generated image from ${provider.label}: ${imgRes.status}`);
+      throw new AiError(`Couldn't download the image generated by ${provider.label}. Please try again.`);
+    }
     return Buffer.from(await imgRes.arrayBuffer());
   }
 
-  throw new Error(`${provider.label} returned an unrecognized image response`);
+  console.error(`[ai] ${provider.label} returned an unrecognized image response:`, JSON.stringify(data));
+  throw new AiError(`${provider.label} returned an unexpected response. Please try again.`);
 }

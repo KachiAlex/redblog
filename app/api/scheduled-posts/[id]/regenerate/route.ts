@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { regenerateCaption, generateImage } from "@/lib/ai";
+import { regenerateCaption, generateImage, AiError } from "@/lib/ai";
 import { saveGeneratedImage } from "@/lib/images";
+
+function friendlyErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof AiError) return err.message;
+  return fallback;
+}
 
 export async function POST(
   req: NextRequest,
@@ -34,6 +39,7 @@ export async function POST(
     });
 
     let imageFilePath = post.imageFilePath;
+    let warning: string | undefined;
     if (regenerateImage !== false && post.campaign?.imageProvider !== "none") {
       try {
         const imageBuffer = await generateImage(imagePrompt, post.campaign?.imageProvider);
@@ -43,6 +49,7 @@ export async function POST(
         }
       } catch (imgErr) {
         console.error("Image regeneration failed:", imgErr);
+        warning = `${friendlyErrorMessage(imgErr, "The image couldn't be regenerated.")} The caption was updated, but the previous image was kept.`;
       }
     }
 
@@ -51,10 +58,12 @@ export async function POST(
       data: { caption, imagePrompt, imageFilePath },
     });
 
-    return NextResponse.json({ success: true, post: updated });
+    return NextResponse.json({ success: true, post: updated, warning });
   } catch (err) {
     console.error("Regenerate post error:", err);
-    const message = err instanceof Error ? err.message : "Regeneration failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: friendlyErrorMessage(err, "Couldn't regenerate this post right now. Please try again in a moment.") },
+      { status: 500 }
+    );
   }
 }

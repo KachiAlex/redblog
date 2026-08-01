@@ -50,6 +50,26 @@ const labelStyle: React.CSSProperties = {
   marginBottom: "8px",
 };
 
+function Banner({ tone, children }: { tone: "error" | "warning"; children: React.ReactNode }) {
+  const color = tone === "error" ? "var(--red-bright)" : "#f59e0b";
+  return (
+    <div
+      style={{
+        border: `1px solid ${color}55`,
+        background: `${color}14`,
+        borderRadius: "4px",
+        padding: "12px 16px",
+        fontSize: "13px",
+        color,
+        lineHeight: 1.5,
+      }}
+      className="font-mono-label"
+    >
+      {children}
+    </div>
+  );
+}
+
 function statusColor(status: string) {
   switch (status) {
     case "published":
@@ -82,10 +102,12 @@ export function CampaignManager({
 }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [showWizard, setShowWizard] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
 
-  function handleCreated(campaign: Campaign) {
+  function handleCreated(campaign: Campaign, newWarning?: string) {
     setCampaigns((prev) => [campaign, ...prev]);
     setShowWizard(false);
+    setWarning(newWarning || null);
   }
 
   function handleUpdated(updated: Campaign) {
@@ -115,6 +137,15 @@ export function CampaignManager({
           </button>
         )}
       </div>
+
+      {warning && (
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+          <Banner tone="warning">{warning}</Banner>
+          <button onClick={() => setWarning(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gray)", flexShrink: 0 }}>
+            <X style={{ width: "14px", height: "14px" }} />
+          </button>
+        </div>
+      )}
 
       {showWizard && (
         <CampaignWizard
@@ -170,7 +201,7 @@ function CampaignWizard({
   igUsername: string;
   textProviders: ProviderOption[];
   imageProviders: ProviderOption[];
-  onCreated: (campaign: Campaign) => void;
+  onCreated: (campaign: Campaign, warning?: string) => void;
   onCancel: () => void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -208,12 +239,12 @@ function CampaignWizard({
       });
       const data = await res.json();
       if (data.success) {
-        onCreated(data.campaign);
+        onCreated(data.campaign, data.warning);
       } else {
-        setError(data.error || "Failed to generate campaign");
+        setError(data.error || "Something went wrong generating your campaign. Please try again.");
       }
     } catch {
-      setError("Failed to generate campaign. Please try again.");
+      setError("Couldn't reach the server. Please check your connection and try again.");
     }
     setLoading(false);
   }
@@ -281,11 +312,7 @@ function CampaignWizard({
         </div>
       </div>
 
-      {error && (
-        <div style={{ border: "1px solid rgba(232,64,44,0.3)", background: "rgba(232,64,44,0.08)", borderRadius: "4px", padding: "12px 16px", fontSize: "13px", color: "var(--red-bright)" }} className="font-mono-label">
-          {error}
-        </div>
-      )}
+      {error && <Banner tone="error">{error}</Banner>}
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
         <button type="submit" disabled={loading || !context.trim()} className="btn btn-primary" style={{ opacity: loading || !context.trim() ? 0.6 : 1 }}>
@@ -436,6 +463,7 @@ function PostCard({
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
@@ -458,6 +486,7 @@ function PostCard({
 
   async function handleRegenerate() {
     setRegenerating(true);
+    setRegenerateError(null);
     try {
       const res = await fetch(`/api/scheduled-posts/${post.id}/regenerate`, {
         method: "POST",
@@ -468,9 +497,12 @@ function PostCard({
       if (data.success) {
         onUpdated(data.post);
         setCaption(data.post.caption);
+        if (data.warning) setRegenerateError(data.warning);
+      } else {
+        setRegenerateError(data.error || "Couldn't regenerate this post. Please try again.");
       }
     } catch {
-      // no-op
+      setRegenerateError("Couldn't reach the server. Please try again.");
     }
     setRegenerating(false);
   }
@@ -548,6 +580,9 @@ function PostCard({
 
         {post.error && (
           <p style={{ fontSize: "11px", color: "var(--red-bright)" }}>{post.error}</p>
+        )}
+        {regenerateError && (
+          <p style={{ fontSize: "11px", color: "#f59e0b" }}>{regenerateError}</p>
         )}
 
         {editable && dirty && (

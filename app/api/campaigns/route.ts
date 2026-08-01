@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { buildSchedule, generateCampaignPlan, generateImage, Cadence } from "@/lib/ai";
+import { buildSchedule, generateCampaignPlan, generateImage, AiError, Cadence } from "@/lib/ai";
 import { saveGeneratedImage } from "@/lib/images";
+
+function friendlyErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof AiError) return err.message;
+  return fallback;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -89,6 +94,8 @@ export async function POST(req: NextRequest) {
     });
 
     const posts = [];
+    let imageFailures = 0;
+    let lastImageError: string | null = null;
     for (const item of plan) {
       let imageFilePath: string | null = null;
       try {
@@ -99,6 +106,8 @@ export async function POST(req: NextRequest) {
         }
       } catch (imgErr) {
         console.error("Image generation failed for a campaign post:", imgErr);
+        imageFailures++;
+        lastImageError = friendlyErrorMessage(imgErr, "The image generator had a problem.");
       }
 
       const post = await prisma.scheduledPost.create({
@@ -115,10 +124,17 @@ export async function POST(req: NextRequest) {
       posts.push(post);
     }
 
-    return NextResponse.json({ success: true, campaign: { ...campaign, posts } });
+    const warning =
+      imageFailures > 0
+        ? `${lastImageError} ${imageFailures} of ${posts.length} post(s) were created without an image — you can regenerate them individually.`
+        : undefined;
+
+    return NextResponse.json({ success: true, campaign: { ...campaign, posts }, warning });
   } catch (err) {
     console.error("Create campaign error:", err);
-    const message = err instanceof Error ? err.message : "Campaign generation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: friendlyErrorMessage(err, "Something went wrong generating your campaign. Please try again in a moment.") },
+      { status: 500 }
+    );
   }
 }
