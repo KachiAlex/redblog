@@ -32,8 +32,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function BlogPage({
   params,
+  searchParams,
 }: {
   params: { slug: string };
+  searchParams?: { tag?: string };
 }) {
   const blogPage = await prisma.blogPage.findUnique({
     where: { slug: params.slug },
@@ -54,7 +56,16 @@ export default async function BlogPage({
 
   if (!blogPage) notFound();
 
-  const { creator, creator: { posts } } = blogPage;
+  const { creator, creator: { posts: allPosts } } = blogPage;
+
+  const allTags = Array.from(
+    new Set(allPosts.flatMap((p) => p.tags))
+  ).sort();
+
+  const activeTag = searchParams?.tag;
+  const posts = activeTag
+    ? allPosts.filter((p) => p.tags.includes(activeTag))
+    : allPosts;
 
   const gridStyle: React.CSSProperties =
     blogPage.themeLayout === "list"
@@ -122,6 +133,43 @@ export default async function BlogPage({
       {/* Posts Feed */}
       <main style={{ padding: "48px 0 80px" }}>
         <div className="wrap">
+          {/* Tag filter bar */}
+          {allTags.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "32px" }}>
+              <Link
+                href={`/blog/${blogPage.slug}`}
+                className="font-mono-label"
+                style={{
+                  fontSize: "12px",
+                  padding: "6px 12px",
+                  borderRadius: "3px",
+                  border: "1px solid var(--line)",
+                  background: !activeTag ? "var(--bg-raised)" : "transparent",
+                  color: !activeTag ? "var(--paper)" : "var(--gray)",
+                }}
+              >
+                All
+              </Link>
+              {allTags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/blog/${blogPage.slug}?tag=${encodeURIComponent(tag)}`}
+                  className="font-mono-label"
+                  style={{
+                    fontSize: "12px",
+                    padding: "6px 12px",
+                    borderRadius: "3px",
+                    border: "1px solid var(--line)",
+                    background: activeTag === tag ? "var(--bg-raised)" : "transparent",
+                    color: activeTag === tag ? "var(--paper)" : "var(--gray)",
+                  }}
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          )}
+
           {posts.length === 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", textAlign: "center" }}>
               <span className="eyebrow" style={{ marginBottom: "16px" }}>Empty archive</span>
@@ -173,6 +221,15 @@ export default async function BlogPage({
                       <p style={{ marginTop: "8px", fontSize: "13px", color: "#a9a396", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
                         {truncate(post.caption, 150)}
                       </p>
+                    )}
+                    {post.tags.length > 0 && (
+                      <div style={{ marginTop: "10px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {post.tags.slice(0, 3).map((tag) => (
+                          <span key={tag} className="font-mono-label" style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "3px", background: "var(--bg-raised)", color: "var(--gray)", border: "1px solid var(--line)" }}>
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
                     )}
                     <div style={{ marginTop: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <Link

@@ -4,6 +4,7 @@ import { encrypt } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { uploadVideoToBlob } from "@/lib/video-storage";
+import { transcribePost } from "@/lib/transcribe";
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = getUrlParts(req);
@@ -92,6 +93,25 @@ export async function GET(req: NextRequest) {
           }
         }
 
+        let articleBody: string | null = null;
+        let tags: string[] = [];
+
+        if (item.media_type === "VIDEO") {
+          try {
+            const transcription = await transcribePost(
+              videoFilePath || item.media_url,
+              item.id,
+              item.caption
+            );
+            if (transcription) {
+              articleBody = transcription.articleBody;
+              tags = transcription.tags;
+            }
+          } catch (e) {
+            console.error(`[oauth callback] Transcription failed for ${item.id}:`, e);
+          }
+        }
+
         await prisma.post.upsert({
           where: { igPostId: item.id },
           update: {
@@ -101,6 +121,8 @@ export async function GET(req: NextRequest) {
             videoUrl: item.media_url || null,
             videoFilePath,
             mediaType: item.media_type,
+            articleBody,
+            tags,
             publishedAt: new Date(item.timestamp),
           },
           create: {
@@ -113,6 +135,8 @@ export async function GET(req: NextRequest) {
             videoFilePath,
             mediaType: item.media_type,
             source: "oauth",
+            articleBody,
+            tags,
             publishedAt: new Date(item.timestamp),
           },
         });

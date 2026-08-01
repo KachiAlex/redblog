@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/crypto";
 import { getMedia, getOEmbed } from "@/lib/instagram";
 import { uploadVideoToBlob } from "@/lib/video-storage";
+import { transcribePost } from "@/lib/transcribe";
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,6 +64,24 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      let articleBody: string | null = existing?.articleBody ?? null;
+      let tags: string[] = existing?.tags ?? [];
+
+      if (item.media_type === "VIDEO" && !articleBody) {
+        try {
+          const transcription = await transcribePost(
+            videoFilePath || item.media_url,
+            item.id,
+            item.caption
+          );
+          if (transcription) {
+            articleBody = transcription.articleBody;
+            tags = transcription.tags;
+          }
+        } catch {
+        }
+      }
+
       const postData = {
         permalink: item.permalink,
         embedHtml,
@@ -72,6 +91,8 @@ export async function POST(req: NextRequest) {
         videoUrl: item.media_url || null,
         videoFilePath,
         mediaType: item.media_type,
+        articleBody,
+        tags,
         publishedAt: new Date(item.timestamp),
       };
 

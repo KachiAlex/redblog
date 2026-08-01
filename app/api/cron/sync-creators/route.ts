@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { decrypt, encrypt } from "@/lib/crypto";
-import {
-  getMedia,
-  getOEmbed,
-  refreshLongLivedToken,
-} from "@/lib/instagram";
+import { getMedia, getOEmbed, refreshLongLivedToken } from "@/lib/instagram";
 import { uploadVideoToBlob } from "@/lib/video-storage";
+import { transcribePost } from "@/lib/transcribe";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -57,6 +54,7 @@ async function syncCreatorPosts(creator: any) {
 
     let newCount = 0;
     let updatedCount = 0;
+
     for (const item of mediaItems) {
       const existing = await prisma.post.findUnique({
         where: { igPostId: item.id },
@@ -71,6 +69,7 @@ async function syncCreatorPosts(creator: any) {
           embedHtml = oembed.html || null;
           embedTitle = oembed.title || null;
         } catch {
+          // oEmbed may fail — continue
         }
       }
 
@@ -82,7 +81,27 @@ async function syncCreatorPosts(creator: any) {
           if (blobUrl) {
             videoFilePath = blobUrl;
           }
-        } catch {
+        } catch (e) {
+          console.error(`[cron:sync] Video upload failed for ${item.id}:`, e);
+        }
+      }
+
+      let articleBody: string | null = existing?.articleBody ?? null;
+      let tags: string[] = existing?.tags ?? [];
+
+      if (item.media_type === "VIDEO" && !articleBody) {
+        try {
+          const transcription = await transcribePost(
+            videoFilePath || item.media_url,
+            item.id,
+            item.caption
+          );
+          if (transcription) {
+            articleBody = transcription.articleBody;
+            tags = transcription.tags;
+          }
+        } catch (e) {
+          console.error(`[cron:sync] Transcription failed for ${item.id}:`, e);
         }
       }
 
@@ -95,6 +114,8 @@ async function syncCreatorPosts(creator: any) {
         videoUrl: item.media_url || null,
         videoFilePath,
         mediaType: item.media_type,
+        articleBody,
+        tags,
         publishedAt: new Date(item.timestamp),
       };
 
@@ -119,7 +140,9 @@ async function syncCreatorPosts(creator: any) {
     }
 
     if (newCount > 0 || updatedCount > 0) {
-      console.log(`[cron:sync] @${creator.igUsername}: ${newCount} new, ${updatedCount} updated`);
+      console.log(
+        `[cron:sync] @${creator.igUsername}: ${newCount} new, ${updatedCount} updated`
+      );
     }
   } catch (err: any) {
     console.error(`[cron:sync] Sync failed for @${creator.igUsername}:`, err.message);

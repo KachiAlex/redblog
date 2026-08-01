@@ -5,7 +5,8 @@
 - **DB:** Neon Postgres via Prisma (`prisma/schema.prisma`)
 - **Auth:** Instagram OAuth (long-lived tokens, encrypted at rest with `TOKEN_ENCRYPTION_KEY`)
 - **AI:** OpenAI (GPT + DALL-E) primary; DeepSeek, Moonshot, Together AI optional
-- **Image storage:** Vercel Blob (production) / local filesystem (dev)
+- **Media storage:** Vercel Blob (videos + generated images) / local filesystem (dev)
+- **Transcription:** OpenAI Whisper + GPT-4o-mini (video → blog article)
 - **Scheduled publishing:** Vercel Cron Jobs → protected API routes
 
 ## Commands
@@ -14,7 +15,7 @@ npm run dev          # local dev server
 npm run build        # prisma generate + next build
 npm run db:push      # push schema to Neon
 npm run db:studio    # Prisma Studio
-npm run worker       # local worker (NOT used in production — cron jobs replace it)
+npm run worker       # DEPRECATED — broken (imports deleted scraper.ts); use cron jobs instead
 ```
 
 ## Environment variables
@@ -42,9 +43,14 @@ The publish cron runs an **async** two-phase flow to avoid blocking:
 1. **Phase 1:** due `scheduled` posts → create Instagram media container → store `containerId`, set `publishing`
 2. **Phase 2:** `publishing` posts → check container status → if `FINISHED`, publish to feed; if `ERROR`, mark `failed`; if `IN_PROGRESS`, leave for next tick
 
-This replaces the old `worker/poll-worker.js` blocking 30s polling loop, which doesn't fit Vercel's serverless model.
+This replaces the old `worker/poll-worker.js` blocking 30s polling loop, which doesn't fit Vercel's serverless model. The worker is now broken (imports the deleted `lib/scraper.ts`) and should not be used.
 
-## Image storage
+## Video storage & transcription
+- **`lib/video-storage.ts`** — `uploadVideoToBlob()` downloads a video from Instagram's CDN and uploads it to Vercel Blob, returning a permanent public URL. Used by `/api/sync`, `/api/auth/callback/instagram`, and the sync-creators cron.
+- **`lib/transcribe.ts`** — `transcribePost()` downloads a video, sends audio to OpenAI Whisper for transcription, then uses GPT-4o-mini to format the transcript into a polished blog article (`articleBody`) with auto-generated `tags`. Stored on the `Post` model.
+- The old `lib/scraper.ts` (Playwright-based Instagram scraper) and `/api/scan` route have been removed. All media ingestion now goes through OAuth + the Graph API.
+
+## Generated image storage (AI Studio)
 - **Production (Vercel):** `saveGeneratedImage()` uploads to Vercel Blob and returns a permanent public URL. This is required because `/tmp` is ephemeral and not shared across invocations — Instagram fetches the Blob URL directly at publish time.
 - **Local dev:** images are written to `public/generated/` and served by `/api/generated-images/[filename]`.
 

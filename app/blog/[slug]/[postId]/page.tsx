@@ -26,12 +26,15 @@ export async function generateMetadata({
   if (!post) return { title: "Post not found — RedBlog" };
 
   const title = post.embedTitle || truncate(post.caption || "Instagram Reel", 80);
+  const description = post.articleBody
+    ? truncate(post.articleBody.replace(/<[^>]+>/g, ""), 160)
+    : truncate(post.caption || "Watch this Instagram Reel.", 160);
   return {
     title: `${title} — @${post.creator.igUsername}`,
-    description: truncate(post.caption || "Watch this Instagram Reel.", 160),
+    description,
     openGraph: {
       title,
-      description: truncate(post.caption || "", 160),
+      description,
       images: post.thumbnailUrl ? [post.thumbnailUrl] : [],
       type: "article",
     },
@@ -147,10 +150,44 @@ export default async function IndividualPostPage({
             </div>
           )}
 
+          {/* Auto-generated article from video transcription */}
+          {post.articleBody && (
+            <div
+              style={{ marginTop: "32px" }}
+              className="article-body"
+              dangerouslySetInnerHTML={{ __html: post.articleBody }}
+            />
+          )}
+
+          {/* Tags */}
+          {post.tags.length > 0 && (
+            <div style={{ marginTop: "24px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {post.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="font-mono-label"
+                  style={{
+                    fontSize: "11px",
+                    padding: "4px 10px",
+                    borderRadius: "3px",
+                    background: "var(--bg-raised)",
+                    color: "var(--gray)",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Caption */}
           {post.caption && (
             <div style={{ marginTop: "32px" }}>
-              <p style={{ fontSize: "16px", color: "#c4beb1", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+              <span className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Original caption
+              </span>
+              <p style={{ fontSize: "16px", color: "#c4beb1", lineHeight: 1.7, whiteSpace: "pre-wrap", marginTop: "8px" }}>
                 {post.caption}
               </p>
             </div>
@@ -213,6 +250,29 @@ export default async function IndividualPostPage({
       )}
 
       <style>{`
+        .article-body h2 {
+          font-family: var(--font-newsreader), Georgia, serif;
+          font-style: italic;
+          font-size: 24px;
+          margin-bottom: 16px;
+          color: var(--paper);
+        }
+        .article-body h3 {
+          font-family: var(--font-newsreader), Georgia, serif;
+          font-size: 18px;
+          margin-top: 24px;
+          margin-bottom: 12px;
+          color: var(--paper);
+        }
+        .article-body p {
+          font-size: 16px;
+          line-height: 1.75;
+          color: #c4beb1;
+          margin-bottom: 16px;
+        }
+        .article-body p:last-child {
+          margin-bottom: 0;
+        }
         @media (max-width: 768px) {
           #related-grid { grid-template-columns: 1fr !important; }
         }
