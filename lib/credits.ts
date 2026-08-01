@@ -119,7 +119,7 @@ export async function addCredits(
   creatorId: string,
   credits: number,
   amountPaid: number,
-  provider: "stripe" | "paystack",
+  provider: "paystack",
   reference: string
 ): Promise<void> {
   await prisma.$transaction([

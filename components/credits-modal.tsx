@@ -35,7 +35,6 @@ export function CreditsModal({
   onPurchased?: () => void;
 }) {
   const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
-  const [paymentProvider, setPaymentProvider] = useState<"stripe" | "paystack">("stripe");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +46,7 @@ export function CreditsModal({
     setError(null);
 
     try {
-      const res = await fetch(`/api/credits/buy/${paymentProvider}`, {
+      const res = await fetch(`/api/credits/buy/paystack`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ creatorId, bundleId: selectedBundle }),
@@ -197,47 +196,6 @@ export function CreditsModal({
           })}
         </div>
 
-        {/* Payment provider selection */}
-        <div style={{ marginBottom: "24px" }}>
-          <span className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px", display: "block" }}>
-            Payment Method
-          </span>
-          <div style={{ display: "flex", gap: "12px" }}>
-            <button
-              onClick={() => setPaymentProvider("stripe")}
-              style={{
-                flex: 1,
-                padding: "12px",
-                borderRadius: "4px",
-                border: paymentProvider === "stripe" ? "2px solid var(--red-bright)" : "1px solid var(--line)",
-                background: paymentProvider === "stripe" ? "rgba(232,64,44,0.08)" : "transparent",
-                cursor: "pointer",
-                color: paymentProvider === "stripe" ? "var(--paper)" : "var(--gray)",
-                fontSize: "14px",
-                fontWeight: 500,
-              }}
-            >
-              Card (Stripe)
-            </button>
-            <button
-              onClick={() => setPaymentProvider("paystack")}
-              style={{
-                flex: 1,
-                padding: "12px",
-                borderRadius: "4px",
-                border: paymentProvider === "paystack" ? "2px solid var(--red-bright)" : "1px solid var(--line)",
-                background: paymentProvider === "paystack" ? "rgba(232,64,44,0.08)" : "transparent",
-                cursor: "pointer",
-                color: paymentProvider === "paystack" ? "var(--paper)" : "var(--gray)",
-                fontSize: "14px",
-                fontWeight: 500,
-              }}
-            >
-              Paystack
-            </button>
-          </div>
-        </div>
-
         {error && (
           <p style={{ color: "var(--red-bright)", fontSize: "13px", marginBottom: "16px", textAlign: "center" }}>
             {error}
@@ -269,7 +227,7 @@ export function CreditsModal({
         </button>
 
         <p style={{ textAlign: "center", fontSize: "11px", color: "var(--gray)", marginTop: "16px" }}>
-          Secure payment via {paymentProvider === "stripe" ? "Stripe" : "Paystack"}. Credits added instantly after payment.
+          Secure payment via Paystack. Credits added instantly after payment.
         </p>
       </div>
     </div>
