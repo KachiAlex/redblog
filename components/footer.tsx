@@ -16,8 +16,13 @@ export function Footer() {
         <Link
           href="/"
           className="font-serif-display"
-          style={{ fontStyle: "italic", fontSize: "16px" }}
+          style={{ fontStyle: "italic", fontSize: "16px", display: "flex", alignItems: "center", gap: "7px" }}
         >
+          <img
+            src="/logo-mark.svg"
+            alt="RedBlog"
+            style={{ width: "16px", height: "22px" }}
+          />
           RedBlog
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>

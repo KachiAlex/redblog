@@ -32,14 +32,10 @@ export function Navbar() {
             gap: "9px",
           }}
         >
-          <span
-            style={{
-              width: "9px",
-              height: "9px",
-              borderRadius: "50%",
-              background: "var(--red-bright)",
-              display: "inline-block",
-            }}
+          <img
+            src="/logo-mark.svg"
+            alt="RedBlog"
+            style={{ width: "22px", height: "31px" }}
           />
           RedBlog
         </Link>
