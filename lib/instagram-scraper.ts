@@ -277,7 +277,7 @@ async function scrapeViaScrappa(username: string): Promise<ScrapedProfile | null
     const postsData = await postsRes.json();
 
     const posts: ScrapedPost[] = (postsData.posts || []).map((p: any) => {
-      const shortcode = p.shortcode || p.code || p.id || "";
+      const shortcode = p.shortcode || p.code || "";
       const mediaType = (p.media_type || "").toUpperCase();
       const isVideo = mediaType === "VIDEO" || p.is_video === true;
 
@@ -295,8 +295,11 @@ async function scrapeViaScrappa(username: string): Promise<ScrapedProfile | null
       if (!videoUrl && p.video_url) videoUrl = p.video_url;
       if (!thumbnailUrl && p.thumbnail_url) thumbnailUrl = p.thumbnail_url;
 
+      // Use shortcode as igPostId (stable string, avoids number precision issues)
+      const igPostId = shortcode || String(p.id || "");
+
       return {
-        igPostId: p.id || shortcode,
+        igPostId,
         shortcode,
         caption: typeof p.caption === "string" ? p.caption : (p.caption?.text || null),
         videoUrl,
