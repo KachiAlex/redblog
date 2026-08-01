@@ -67,17 +67,19 @@ model BlogPage {
 }
 
 model Campaign {
-  id          String   @id @default(cuid())
-  creatorId   String
-  creator     Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  context     String
-  cadence     String   // daily | weekly | monthly
-  tone        String?
-  startDate   DateTime
-  endDate     DateTime
-  status      String   @default("draft") // draft | scheduled | completed | canceled
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  creatorId     String
+  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  context       String
+  cadence       String   // daily | weekly | monthly
+  tone          String?
+  startDate     DateTime
+  endDate       DateTime
+  status        String   @default("draft") // draft | scheduled | completed | canceled
+  textProvider  String   @default("deepseek") // openai | deepseek | kimi
+  imageProvider String   @default("openai-dalle3") // openai-dalle3 | openai-dalle2 | together | none
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   posts ScheduledPost[]
 

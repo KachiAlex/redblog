@@ -30,14 +30,17 @@ export async function POST(
       tone: post.campaign?.tone || undefined,
       igUsername: post.creator.igUsername,
       instructions,
+      textProvider: post.campaign?.textProvider,
     });
 
     let imageFilePath = post.imageFilePath;
-    if (regenerateImage !== false) {
+    if (regenerateImage !== false && post.campaign?.imageProvider !== "none") {
       try {
-        const imageBuffer = await generateImage(imagePrompt);
-        const saved = saveGeneratedImage(imageBuffer, `${post.id}-${Date.now()}`);
-        imageFilePath = saved.filePath;
+        const imageBuffer = await generateImage(imagePrompt, post.campaign?.imageProvider);
+        if (imageBuffer) {
+          const saved = saveGeneratedImage(imageBuffer, `${post.id}-${Date.now()}`);
+          imageFilePath = saved.filePath;
+        }
       } catch (imgErr) {
         console.error("Image regeneration failed:", imgErr);
       }

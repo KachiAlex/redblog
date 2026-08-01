@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { CampaignManager } from "@/components/campaign-manager";
+import { listTextProviders, listImageProviders } from "@/lib/ai-providers";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ export default async function CampaignsPage() {
               creatorId={creator.id}
               igUsername={creator.igUsername}
               initialCampaigns={JSON.parse(JSON.stringify(campaigns))}
+              textProviders={listTextProviders()}
+              imageProviders={listImageProviders()}
             />
           )}
         </div>

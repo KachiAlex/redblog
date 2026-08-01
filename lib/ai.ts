@@ -1,12 +1,4 @@
-const OPENAI_BASE = "https://api.openai.com/v1";
-const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini";
-const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || "dall-e-3";
-
-function getApiKey(): string {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("OPENAI_API_KEY is not configured");
-  return key;
-}
+import { resolveTextConfig, resolveImageConfig } from "@/lib/ai-providers";
 
 export type Cadence = "daily" | "weekly" | "monthly";
 
@@ -14,6 +6,41 @@ export interface PlannedPost {
   scheduledFor: string; // ISO date
   caption: string;
   imagePrompt: string;
+}
+
+async function chatCompletion(
+  textProvider: string | undefined,
+  messages: { role: string; content: string }[],
+  temperature: number
+): Promise<string> {
+  const { provider, baseUrl, model, apiKey } = resolveTextConfig(textProvider);
+  if (!apiKey) {
+    throw new Error(`${provider.apiKeyEnv} is not configured for the ${provider.label} text provider`);
+  }
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      response_format: { type: "json_object" },
+      messages,
+      temperature,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`${provider.label} chat completion failed: ${err}`);
+  }
+
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error(`${provider.label} returned an empty completion`);
+  return content;
 }
 
 /** Computes the list of dates a campaign should post on, based on cadence. */
@@ -47,8 +74,9 @@ export async function generateCampaignPlan(params: {
   cadence: Cadence;
   schedule: Date[];
   igUsername: string;
+  textProvider?: string;
 }): Promise<PlannedPost[]> {
-  const { context, tone, cadence, schedule, igUsername } = params;
+  const { context, tone, cadence, schedule, igUsername, textProvider } = params;
 
   const system = `You are a social media strategist and copywriter for Instagram creators.
 Given a creator's context and a list of dates, produce one Instagram post per date.
@@ -71,37 +99,20 @@ ${context}
 Dates to generate posts for:
 ${schedule.map((d) => d.toISOString()).join("\n")}`;
 
-  const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify({
-      model: CHAT_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.9,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI chat completion failed: ${err}`);
-  }
-
-  const data = await res.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenAI returned an empty completion");
+  const content = await chatCompletion(
+    textProvider,
+    [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    0.9
+  );
 
   let parsed: { posts?: { date: string; caption: string; imagePrompt: string }[] };
   try {
     parsed = JSON.parse(content);
   } catch {
-    throw new Error("OpenAI returned malformed JSON for the campaign plan");
+    throw new Error("The model returned malformed JSON for the campaign plan");
   }
 
   const posts = parsed.posts || [];
@@ -121,8 +132,9 @@ export async function regenerateCaption(params: {
   tone?: string;
   igUsername: string;
   instructions?: string;
+  textProvider?: string;
 }): Promise<{ caption: string; imagePrompt: string }> {
-  const { context, tone, igUsername, instructions } = params;
+  const { context, tone, igUsername, instructions, textProvider } = params;
 
   const system = `You are a social media strategist and copywriter for Instagram creators.
 Produce a single Instagram post grounded in the creator's context.
@@ -136,31 +148,14 @@ ${context}
 """
 ${instructions ? `Extra instructions for this specific post: ${instructions}` : ""}`;
 
-  const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify({
-      model: CHAT_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 1,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI chat completion failed: ${err}`);
-  }
-
-  const data = await res.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenAI returned an empty completion");
+  const content = await chatCompletion(
+    textProvider,
+    [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    1
+  );
 
   const parsed = JSON.parse(content);
   return {
@@ -169,31 +164,55 @@ ${instructions ? `Extra instructions for this specific post: ${instructions}` : 
   };
 }
 
-/** Generates an image from a prompt and returns the raw PNG/JPEG bytes. */
-export async function generateImage(prompt: string): Promise<Buffer> {
-  const res = await fetch(`${OPENAI_BASE}/images/generations`, {
+/**
+ * Generates an image from a prompt and returns the raw PNG/JPEG bytes.
+ * Returns null if the "none" image provider is selected (caption-only posts).
+ */
+export async function generateImage(
+  prompt: string,
+  imageProvider?: string
+): Promise<Buffer | null> {
+  if (imageProvider === "none") return null;
+
+  const { provider, baseUrl, model, apiKey } = resolveImageConfig(imageProvider);
+  if (provider.id === "none") return null;
+  if (!apiKey) {
+    throw new Error(`${provider.apiKeyEnv} is not configured for the ${provider.label} image provider`);
+  }
+
+  const res = await fetch(`${baseUrl}/images/generations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: IMAGE_MODEL,
+      model,
       prompt,
-      size: "1024x1024",
       n: 1,
-      response_format: "b64_json",
+      size: "1024x1024",
+      response_format: provider.responseFormat,
     }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`OpenAI image generation failed: ${err}`);
+    throw new Error(`${provider.label} image generation failed: ${err}`);
   }
 
   const data = await res.json();
-  const b64 = data.data?.[0]?.b64_json;
-  if (!b64) throw new Error("OpenAI returned no image data");
+  const item = data.data?.[0];
+  if (!item) throw new Error(`${provider.label} returned no image data`);
 
-  return Buffer.from(b64, "base64");
+  if (item.b64_json) {
+    return Buffer.from(item.b64_json, "base64");
+  }
+
+  if (item.url) {
+    const imgRes = await fetch(item.url);
+    if (!imgRes.ok) throw new Error(`Failed to download generated image from ${provider.label}`);
+    return Buffer.from(await imgRes.arrayBuffer());
+  }
+
+  throw new Error(`${provider.label} returned an unrecognized image response`);
 }

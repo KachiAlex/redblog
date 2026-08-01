@@ -37,10 +37,22 @@ TOKEN_ENCRYPTION_KEY=your_32_byte_hex_encryption_key
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret
 
-# AI Studio (campaign generation + image generation)
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_CHAT_MODEL=gpt-4o-mini
-OPENAI_IMAGE_MODEL=dall-e-3
+# AI Studio — caption generation (pick one or more; selectable per campaign in the UI)
+OPENAI_API_KEY=your_openai_api_key           # GPT-4o mini
+DEEPSEEK_API_KEY=your_deepseek_api_key       # DeepSeek — cheapest text option
+MOONSHOT_API_KEY=your_moonshot_api_key       # Kimi / Moonshot
+
+# AI Studio — image generation (pick one or more; selectable per campaign, or choose "none" to skip images)
+# OPENAI_API_KEY above is reused for DALL-E 2/3
+TOGETHER_API_KEY=your_together_api_key       # FLUX.1-schnell — cheapest image option
+
+# Optional overrides (defaults shown)
+# OPENAI_CHAT_MODEL=gpt-4o-mini
+# OPENAI_IMAGE_MODEL=dall-e-3
+# OPENAI_IMAGE_MODEL_CHEAP=dall-e-2
+# DEEPSEEK_MODEL=deepseek-chat
+# MOONSHOT_MODEL=kimi-latest
+# TOGETHER_IMAGE_MODEL=black-forest-labs/FLUX.1-schnell-Free
 
 # Publicly reachable base URL the poll-worker uses so Instagram can fetch
 # generated images when publishing (e.g. https://yourapp.vercel.app)
@@ -52,6 +64,13 @@ APP_BASE_URL=http://localhost:3000
 > `instagram_business_content_publish` scope (already requested by `/api/auth/login`).
 > Existing connections made before this feature was added will need to
 > reconnect via **Settings → Disconnect** then **Connect Instagram** again.
+>
+> You only need to configure the providers you actually plan to use in the
+> AI Studio wizard — each campaign lets you pick a caption model (OpenAI,
+> DeepSeek, or Kimi/Moonshot) and an image option (OpenAI DALL-E 3/2,
+> Together AI FLUX, or no image at all) independently, so you can mix a
+> cheap/free text model with no image generation for near-zero cost, or
+> higher-quality paid models when it matters.
 
 ### 3. Set Up Meta Developer App
 

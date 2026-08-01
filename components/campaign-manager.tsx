@@ -22,8 +22,12 @@ type Campaign = {
   startDate: string;
   endDate: string;
   status: string;
+  textProvider: string;
+  imageProvider: string;
   posts: ScheduledPost[];
 };
+
+type ProviderOption = { id: string; label: string; costHint: string };
 
 const inputStyle: React.CSSProperties = {
   background: "var(--bg-raised)",
@@ -67,10 +71,14 @@ export function CampaignManager({
   creatorId,
   igUsername,
   initialCampaigns,
+  textProviders,
+  imageProviders,
 }: {
   creatorId: string;
   igUsername: string;
   initialCampaigns: Campaign[];
+  textProviders: ProviderOption[];
+  imageProviders: ProviderOption[];
 }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [showWizard, setShowWizard] = useState(false);
@@ -112,6 +120,8 @@ export function CampaignManager({
         <CampaignWizard
           creatorId={creatorId}
           igUsername={igUsername}
+          textProviders={textProviders}
+          imageProviders={imageProviders}
           onCreated={handleCreated}
           onCancel={() => setShowWizard(false)}
         />
@@ -137,6 +147,8 @@ export function CampaignManager({
           <CampaignCard
             key={campaign.id}
             campaign={campaign}
+            textProviders={textProviders}
+            imageProviders={imageProviders}
             onUpdated={handleUpdated}
             onDeleted={handleDeleted}
           />
@@ -149,11 +161,15 @@ export function CampaignManager({
 function CampaignWizard({
   creatorId,
   igUsername,
+  textProviders,
+  imageProviders,
   onCreated,
   onCancel,
 }: {
   creatorId: string;
   igUsername: string;
+  textProviders: ProviderOption[];
+  imageProviders: ProviderOption[];
   onCreated: (campaign: Campaign) => void;
   onCancel: () => void;
 }) {
@@ -165,6 +181,8 @@ function CampaignWizard({
   const [tone, setTone] = useState("");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(inTwoWeeks);
+  const [textProvider, setTextProvider] = useState(textProviders[0]?.id || "deepseek");
+  const [imageProvider, setImageProvider] = useState(imageProviders[0]?.id || "openai-dalle3");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,7 +195,16 @@ function CampaignWizard({
       const res = await fetch("/api/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ creatorId, context, cadence, tone: tone || undefined, startDate, endDate }),
+        body: JSON.stringify({
+          creatorId,
+          context,
+          cadence,
+          tone: tone || undefined,
+          startDate,
+          endDate,
+          textProvider,
+          imageProvider,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -235,6 +262,25 @@ function CampaignWizard({
         </div>
       </div>
 
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+        <div>
+          <label style={labelStyle}>Caption model</label>
+          <select value={textProvider} onChange={(e) => setTextProvider(e.target.value)} style={inputStyle}>
+            {textProviders.map((p) => (
+              <option key={p.id} value={p.id}>{p.label} — {p.costHint}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Image generation</label>
+          <select value={imageProvider} onChange={(e) => setImageProvider(e.target.value)} style={inputStyle}>
+            {imageProviders.map((p) => (
+              <option key={p.id} value={p.id}>{p.label} — {p.costHint}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {error && (
         <div style={{ border: "1px solid rgba(232,64,44,0.3)", background: "rgba(232,64,44,0.08)", borderRadius: "4px", padding: "12px 16px", fontSize: "13px", color: "var(--red-bright)" }} className="font-mono-label">
           {error}
@@ -253,13 +299,19 @@ function CampaignWizard({
 
 function CampaignCard({
   campaign,
+  textProviders,
+  imageProviders,
   onUpdated,
   onDeleted,
 }: {
   campaign: Campaign;
+  textProviders: ProviderOption[];
+  imageProviders: ProviderOption[];
   onUpdated: (campaign: Campaign) => void;
   onDeleted: (id: string) => void;
 }) {
+  const textLabel = textProviders.find((p) => p.id === campaign.textProvider)?.label || campaign.textProvider;
+  const imageLabel = imageProviders.find((p) => p.id === campaign.imageProvider)?.label || campaign.imageProvider;
   const [busy, setBusy] = useState(false);
   const [posts, setPosts] = useState(campaign.posts);
 
@@ -329,6 +381,9 @@ function CampaignCard({
             </span>
             <span className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)", textTransform: "uppercase" }}>
               {campaign.cadence} · {formatDate(campaign.startDate)} – {formatDate(campaign.endDate)}
+            </span>
+            <span className="font-mono-label" style={{ fontSize: "11px", color: "var(--gray)" }}>
+              {textLabel} · {imageLabel}
             </span>
           </div>
           <p style={{ fontSize: "14px", marginTop: "10px", lineHeight: 1.5 }}>{campaign.context}</p>

@@ -24,13 +24,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { creatorId, context, cadence, tone, startDate, endDate } = body as {
+    const { creatorId, context, cadence, tone, startDate, endDate, textProvider, imageProvider } = body as {
       creatorId?: string;
       context?: string;
       cadence?: Cadence;
       tone?: string;
       startDate?: string;
       endDate?: string;
+      textProvider?: string;
+      imageProvider?: string;
     };
 
     if (!creatorId || !context?.trim() || !cadence || !startDate || !endDate) {
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest) {
       cadence,
       schedule,
       igUsername: creator.igUsername,
+      textProvider,
     });
 
     const campaign = await prisma.campaign.create({
@@ -80,6 +83,8 @@ export async function POST(req: NextRequest) {
         startDate: start,
         endDate: end,
         status: "draft",
+        textProvider: textProvider || undefined,
+        imageProvider: imageProvider || undefined,
       },
     });
 
@@ -87,9 +92,11 @@ export async function POST(req: NextRequest) {
     for (const item of plan) {
       let imageFilePath: string | null = null;
       try {
-        const imageBuffer = await generateImage(item.imagePrompt);
-        const saved = saveGeneratedImage(imageBuffer, `${campaign.id}-${posts.length}`);
-        imageFilePath = saved.filePath;
+        const imageBuffer = await generateImage(item.imagePrompt, imageProvider);
+        if (imageBuffer) {
+          const saved = saveGeneratedImage(imageBuffer, `${campaign.id}-${posts.length}`);
+          imageFilePath = saved.filePath;
+        }
       } catch (imgErr) {
         console.error("Image generation failed for a campaign post:", imgErr);
       }
