@@ -2,8 +2,35 @@ import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ScrollReveal } from "@/components/scroll-reveal";
+import { prisma } from "@/lib/db";
+import { relativeTime } from "@/lib/utils";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const kreatixCreator = await prisma.creator.findUnique({
+    where: { igUsername: "kreatixtech" },
+    select: {
+      id: true,
+      igUsername: true,
+      igProfilePic: true,
+      blogPage: { select: { slug: true } },
+      posts: {
+        select: {
+          id: true,
+          caption: true,
+          thumbnailUrl: true,
+          publishedAt: true,
+          mediaType: true,
+        },
+        orderBy: { publishedAt: "desc" },
+        take: 10,
+      },
+    },
+  });
+
+  const livePosts = (kreatixCreator?.posts ?? []).filter((p) => p.publishedAt).slice(0, 3);
+  const blogSlug = kreatixCreator?.blogPage?.slug || "kreatixtech";
   return (
     <div>
       <Navbar />
@@ -151,15 +178,15 @@ export default function HomePage() {
                 className="font-serif-display"
                 style={{ fontSize: "30px", margin: "14px 0 12px", lineHeight: 1.15 }}
               >
-                @surewordradio, developed.
+                @kreatixtech, developed.
               </h3>
               <p style={{ color: "#5a5548", fontSize: "14.5px", lineHeight: 1.6, maxWidth: "340px", marginBottom: "22px" }}>
-                Three weeks of Reels, twelve blog entries, one archive that
-                outlives the feed. This is what a connected account looks like
-                once RedBlog has been running for a month.
+                {livePosts.length > 0
+                  ? "Real Reels from @kreatixtech, auto-transcribed and published as a permanent blog archive. This is what RedBlog does — your content, developed a second time."
+                  : "Connect your Instagram account and RedBlog turns your Reels into a permanent, searchable blog — hosted by you, credited to you, indexed by Google."}
               </p>
               <Link
-                href="/blog"
+                href={livePosts.length > 0 ? `/blog/${blogSlug}` : "/blog"}
                 className="font-mono-label"
                 style={{
                   fontSize: "12px",
@@ -171,9 +198,23 @@ export default function HomePage() {
               </Link>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }} className="example-posts-grid">
-              <ExamplePost title="Sunday service clip" date="JUL 27" img="https://images.unsplash.com/photo-1604516524119-4b9c75d7e4f4?w=300&h=533&fit=crop" />
-              <ExamplePost title="Studio setup walk-through" date="JUL 22" img="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=300&h=533&fit=crop" />
-              <ExamplePost title="Behind the broadcast" date="JUL 18" img="https://images.unsplash.com/photo-1492691527719-9d1eab7b9317?w=300&h=533&fit=crop" />
+              {livePosts.length > 0 ? (
+                livePosts.map((post) => (
+                  <Link key={post.id} href={`/blog/${blogSlug}/${post.id}`} style={{ textDecoration: "none" }}>
+                    <ExamplePost
+                      title={post.caption ? post.caption.slice(0, 40) + (post.caption.length > 40 ? "…" : "") : "Untitled"}
+                      date={post.publishedAt ? relativeTime(post.publishedAt.toISOString()).toUpperCase() : ""}
+                      img={post.thumbnailUrl || undefined}
+                    />
+                  </Link>
+                ))
+              ) : (
+                <>
+                  <ExamplePost title="Sunday service clip" date="JUL 27" img="https://images.unsplash.com/photo-1604516524119-4b9c75d7e4f4?w=300&h=533&fit=crop" />
+                  <ExamplePost title="Studio setup walk-through" date="JUL 22" img="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=300&h=533&fit=crop" />
+                  <ExamplePost title="Behind the broadcast" date="JUL 18" img="https://images.unsplash.com/photo-1492691527719-9d1eab7b9317?w=300&h=533&fit=crop" />
+                </>
+              )}
             </div>
           </div>
         </div>
