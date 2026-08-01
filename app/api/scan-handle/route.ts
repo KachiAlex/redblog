@@ -52,26 +52,34 @@ export async function POST(req: NextRequest) {
       `[scan-handle] Found ${scraped.posts.length} posts for @${cleanUsername}`
     );
 
-    // Generate a pseudo IG user ID for scanned profiles
-    // Use a deterministic ID based on username to avoid duplicates
-    const igUserId = `scanned_${cleanUsername}`;
-
-    // Upsert creator with scanned source
-    const creator = await prisma.creator.upsert({
-      where: { igUserId },
-      update: {
-        igUsername: cleanUsername,
-        igProfilePic: scraped.profilePicUrl,
-        scannedFrom: "scan",
-      },
-      create: {
-        igUserId,
-        igUsername: cleanUsername,
-        igProfilePic: scraped.profilePicUrl,
-        accessToken: "scanned_no_token",
-        scannedFrom: "scan",
-      },
+    // Find or create creator by username (not igUserId, to avoid unique constraint conflicts
+    // when a creator was already connected via OAuth)
+    const existingCreator = await prisma.creator.findUnique({
+      where: { igUsername: cleanUsername },
     });
+
+    let creator;
+    if (existingCreator) {
+      // Update profile info but preserve OAuth token if present
+      creator = await prisma.creator.update({
+        where: { id: existingCreator.id },
+        data: {
+          igProfilePic: scraped.profilePicUrl || existingCreator.igProfilePic,
+          // Only set scannedFrom to "scan" if it wasn't connected via OAuth
+          scannedFrom: existingCreator.scannedFrom === "oauth" ? "oauth" : "scan",
+        },
+      });
+    } else {
+      creator = await prisma.creator.create({
+        data: {
+          igUserId: `scanned_${cleanUsername}`,
+          igUsername: cleanUsername,
+          igProfilePic: scraped.profilePicUrl,
+          accessToken: "scanned_no_token",
+          scannedFrom: "scan",
+        },
+      });
+    }
 
     // Create blog page if it doesn't exist
     const blogPage = await prisma.blogPage.upsert({
@@ -85,64 +93,16 @@ export async function POST(req: NextRequest) {
 
     console.log(`[scan-handle] Creator: ${creator.id}, Blog: ${blogPage.slug}`);
 
-    // Process posts — download videos, upload to Blob, transcribe
+    // Phase 1: Save all posts to DB immediately (fast — no video processing)
+    // This ensures posts are visible on the blog right away
     let savedCount = 0;
-    let videoCount = 0;
     const totalPosts = scraped.posts.length;
 
     for (const post of scraped.posts) {
       try {
-        // Skip if already exists
         const existing = await prisma.post.findUnique({
           where: { igPostId: post.igPostId },
         });
-
-        let videoFilePath: string | null = existing?.videoFilePath ?? null;
-        let articleBody: string | null = existing?.articleBody ?? null;
-        let tags: string[] = existing?.tags ?? [];
-
-        // Download and host video
-        if (post.mediaType === "VIDEO" && post.videoUrl) {
-          if (!videoFilePath) {
-            try {
-              console.log(`[scan-handle] Uploading video for post ${post.shortcode}...`);
-              const blobUrl = await uploadVideoToBlob(
-                post.videoUrl,
-                post.igPostId
-              );
-              if (blobUrl) {
-                videoFilePath = blobUrl;
-                videoCount++;
-              }
-            } catch (e) {
-              console.error(
-                `[scan-handle] Video upload failed for ${post.shortcode}:`,
-                e
-              );
-            }
-          }
-
-          // Transcribe video → generate blog article
-          if (!articleBody && videoFilePath) {
-            try {
-              console.log(`[scan-handle] Transcribing post ${post.shortcode}...`);
-              const transcription = await transcribePost(
-                videoFilePath,
-                post.igPostId,
-                post.caption
-              );
-              if (transcription) {
-                articleBody = transcription.articleBody;
-                tags = transcription.tags;
-              }
-            } catch (e) {
-              console.error(
-                `[scan-handle] Transcription failed for ${post.shortcode}:`,
-                e
-              );
-            }
-          }
-        }
 
         if (existing) {
           await prisma.post.update({
@@ -152,10 +112,7 @@ export async function POST(req: NextRequest) {
               caption: post.caption,
               thumbnailUrl: post.thumbnailUrl,
               videoUrl: post.videoUrl,
-              videoFilePath,
               mediaType: post.mediaType,
-              articleBody,
-              tags,
               publishedAt: new Date(post.timestamp),
             },
           });
@@ -168,11 +125,8 @@ export async function POST(req: NextRequest) {
               caption: post.caption,
               thumbnailUrl: post.thumbnailUrl,
               videoUrl: post.videoUrl,
-              videoFilePath,
               mediaType: post.mediaType,
               source: "scan",
-              articleBody,
-              tags,
               publishedAt: new Date(post.timestamp),
             },
           });
@@ -181,6 +135,88 @@ export async function POST(req: NextRequest) {
       } catch (postErr) {
         console.error(
           `[scan-handle] Failed to save post ${post.shortcode}:`,
+          postErr
+        );
+      }
+    }
+
+    console.log(
+      `[scan-handle] Phase 1 complete: ${savedCount}/${totalPosts} posts saved to DB`
+    );
+
+    // Phase 2: Process videos — download, upload to Blob, transcribe
+    // This is slow but posts are already visible from Phase 1
+    let videoCount = 0;
+    for (const post of scraped.posts) {
+      if (post.mediaType !== "VIDEO" || !post.videoUrl) continue;
+
+      try {
+        const existing = await prisma.post.findUnique({
+          where: { igPostId: post.igPostId },
+        });
+
+        // Skip if already processed
+        if (existing?.videoFilePath && existing?.articleBody) continue;
+
+        let videoFilePath: string | null = existing?.videoFilePath ?? null;
+        let articleBody: string | null = existing?.articleBody ?? null;
+        let tags: string[] = existing?.tags ?? [];
+
+        // Download and host video
+        if (!videoFilePath) {
+          try {
+            console.log(`[scan-handle] Uploading video for post ${post.shortcode}...`);
+            const blobUrl = await uploadVideoToBlob(
+              post.videoUrl,
+              post.igPostId
+            );
+            if (blobUrl) {
+              videoFilePath = blobUrl;
+              videoCount++;
+            }
+          } catch (e) {
+            console.error(
+              `[scan-handle] Video upload failed for ${post.shortcode}:`,
+              e
+            );
+          }
+        }
+
+        // Transcribe video → generate blog article
+        if (!articleBody && videoFilePath) {
+          try {
+            console.log(`[scan-handle] Transcribing post ${post.shortcode}...`);
+            const transcription = await transcribePost(
+              videoFilePath,
+              post.igPostId,
+              post.caption
+            );
+            if (transcription) {
+              articleBody = transcription.articleBody;
+              tags = transcription.tags;
+            }
+          } catch (e) {
+            console.error(
+              `[scan-handle] Transcription failed for ${post.shortcode}:`,
+              e
+            );
+          }
+        }
+
+        // Update post with hosted video and article
+        if (videoFilePath || articleBody) {
+          await prisma.post.update({
+            where: { igPostId: post.igPostId },
+            data: {
+              videoFilePath,
+              articleBody,
+              tags,
+            },
+          });
+        }
+      } catch (postErr) {
+        console.error(
+          `[scan-handle] Failed to process video for ${post.shortcode}:`,
           postErr
         );
       }

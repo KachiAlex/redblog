@@ -95,6 +95,12 @@ export default function ScanPage() {
           videosHosted: data.videosHosted,
           profile: data.profile,
         });
+        // Auto-redirect to the blog page after 3 seconds
+        if (data.blogUrl) {
+          setTimeout(() => {
+            window.location.href = data.blogUrl;
+          }, 3000);
+        }
       }
     } catch {
       setResult({
@@ -363,6 +369,8 @@ export default function ScanPage() {
               )}
               <p style={{ fontSize: "14px", color: "var(--gray)", marginBottom: "20px" }}>
                 {result.postsSaved} posts imported, {result.videosHosted} videos hosted &amp; transcribed.
+                <br />
+                Redirecting to your blog...
               </p>
               <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
                 <Link href={result.blogUrl} className="btn btn-primary">
